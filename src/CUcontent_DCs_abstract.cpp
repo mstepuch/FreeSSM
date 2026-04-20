@@ -440,6 +440,72 @@ void CUcontent_DCs_abstract::insertDCprintTable(QTextCursor cursor, QString titl
 #endif
 
 
+#ifndef SMALL_RESOLUTION
+void CUcontent_DCs_abstract::saveDCprotocol()
+{
+	if (!_SSMPdev) return;
+	// Ask for output file:
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save DTC Report"),
+		QDir::homePath() + "/FreeSSM_DTCs.txt",
+		tr("Text files (*.txt);;All files (*)"));
+	if (fileName.isEmpty()) return;
+	// Open file:
+	QFile file(fileName);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		QMessageBox::critical(this, tr("Error"), tr("Failed to open file for writing."));
+		return;
+	}
+	QTextStream stream(&file);
+	// Header:
+	stream << "FreeSSM " << QApplication::applicationVersion() << "\n";
+	stream << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "\n";
+	stream << "----------------------------------------\n";
+	// CU info:
+	QString systype;
+	if (_SSMPdev->getSystemDescription(&systype))
+		stream << tr("System Type:") << " " << systype << "\n";
+	std::string ROM_ID = _SSMPdev->getROMID();
+	if (ROM_ID.length())
+		stream << tr("ROM-ID:") << " " << QString::fromStdString(ROM_ID) << "\n";
+	stream << "----------------------------------------\n\n";
+	// DC data (virtual, class-specific):
+	createDCexportText(stream);
+	// Close file:
+	file.close();
+	// Success message:
+	QMessageBox::information(this, tr("Save"), tr("DTC report saved successfully."));
+}
+#endif
+
+
+#ifndef SMALL_RESOLUTION
+void CUcontent_DCs_abstract::insertDCexportSection(QTextStream &stream, QString title, QStringList codes, QStringList descriptions)
+{
+	stream << title << "\n";
+	stream << QString(title.length(), QChar('-')) << "\n";
+	if (codes.isEmpty() || (codes.size() == 1 && codes.at(0).isEmpty()))
+	{
+		for (int i = 0; i < descriptions.size(); i++)
+			stream << descriptions.at(i) << "\n";
+	}
+	else
+	{
+		for (int i = 0; i < codes.size(); i++)
+		{
+			stream << codes.at(i);
+			if (!codes.at(i).isEmpty())
+				stream << "\t";
+			if (i < descriptions.size())
+				stream << descriptions.at(i);
+			stream << "\n";
+		}
+	}
+	stream << "\n";
+}
+#endif
+
+
 void CUcontent_DCs_abstract::communicationError(QString errstr)
 {
 	QMessageBox msg( QMessageBox::Critical, tr("Communication Error"), tr("Communication Error:") + ('\n') + errstr, QMessageBox::Ok, this);

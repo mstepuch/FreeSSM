@@ -168,9 +168,11 @@ bool CUcontent_DCs_twoMemories::setup(SSMprotocol *SSMPdev)
 		setDCtableContent(histOrMemDTCs_tableWidget, QStringList(""), QStringList(""));
 	histOrMemDTCs_tableWidget->setEnabled(histOrMemDTCs_sup);
 #ifndef SMALL_RESOLUTION
-	// Deactivate and disconnect "Print"-button:
+	// Deactivate and disconnect "Print"/"Save" buttons:
 	printDClist_pushButton->setEnabled(false);
+	saveDClist_pushButton->setEnabled(false);
 	disconnect(printDClist_pushButton, SIGNAL( released() ), this, SLOT( printDCprotocol() ));
+	disconnect(saveDClist_pushButton, SIGNAL( released() ), this, SLOT( saveDCprotocol() ));
 #endif
 	// Connect start-slot:
 	if (_SSMPdev)
@@ -200,9 +202,11 @@ void CUcontent_DCs_twoMemories::connectGUIelements()
 		connect(_SSMPdev, SIGNAL( historicOrMemorizedDTCs(QStringList, QStringList) ), this, SLOT( updateHistoricOrMemorizedDTCsContent(QStringList, QStringList) ));
 	}
 #ifndef SMALL_RESOLUTION
-	// Connect and disable print-button temporary (until all memories have been read once):
+	// Connect and disable print/save buttons temporary (until all memories have been read once):
 	printDClist_pushButton->setDisabled(true);
+	saveDClist_pushButton->setDisabled(true);
 	connect(printDClist_pushButton, SIGNAL( released() ), this, SLOT( printDCprotocol() ));
+	connect(saveDClist_pushButton, SIGNAL( released() ), this, SLOT( saveDCprotocol() ));
 #endif
 	// NOTE: using released() instead of pressed() as workaround for a Qt-Bug occuring under MS Windows
 }
@@ -231,8 +235,9 @@ void CUcontent_DCs_twoMemories::updateCurrentOrTemporaryDTCsContent(QStringList 
 		}
 		setDCtableContent(currOrTempDTCs_tableWidget, currOrTempDTCs, currOrTempDTCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 
 	}
@@ -254,8 +259,9 @@ void CUcontent_DCs_twoMemories::updateHistoricOrMemorizedDTCsContent(QStringList
 		}
 		setDCtableContent(histOrMemDTCs_tableWidget, histOrMemDTCs, histOrMemDTCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 	}
 }
@@ -289,6 +295,26 @@ void CUcontent_DCs_twoMemories::createDCprintTables(QTextCursor cursor)
 		}
 		// Insert table with historic/memorized DTCs into text document:
 		insertDCprintTable(cursor, histOrMemDTCsTitle_label->text(), histOrMemDTCcodes, histOrMemDTCdescriptions);
+	}
+}
+#endif
+
+
+#ifndef SMALL_RESOLUTION
+void CUcontent_DCs_twoMemories::createDCexportText(QTextStream &stream)
+{
+	QStringList codes, descs;
+	if ((_supportedDCgroups & SSMprotocol::currentDTCs_DCgroup) || (_supportedDCgroups & SSMprotocol::temporaryDTCs_DCgroup))
+	{
+		codes = _currOrTempDTCs; descs = _currOrTempDTCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No Trouble Codes -----"); }
+		insertDCexportSection(stream, currOrTempDTCsTitle_label->text(), codes, descs);
+	}
+	if ((_supportedDCgroups & SSMprotocol::historicDTCs_DCgroup) || (_supportedDCgroups & SSMprotocol::memorizedDTCs_DCgroup))
+	{
+		codes = _histOrMemDTCs; descs = _histOrMemDTCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No Trouble Codes -----"); }
+		insertDCexportSection(stream, histOrMemDTCsTitle_label->text(), codes, descs);
 	}
 }
 #endif

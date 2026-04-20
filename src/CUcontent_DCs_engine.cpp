@@ -216,9 +216,11 @@ bool CUcontent_DCs_engine::setup(SSMprotocol *SSMPdev)
 	memorizedCCCCsTitle_label->setEnabled(memCCCCs_sup);
 	memorizedCCCCs_tableWidget->setEnabled(memCCCCs_sup);
 #ifndef SMALL_RESOLUTION
-	// Deactivate and disconnect "Print"-button:
+	// Deactivate and disconnect "Print"/"Save" buttons:
 	printDClist_pushButton->setEnabled(false);
+	saveDClist_pushButton->setEnabled(false);
 	disconnect(printDClist_pushButton, SIGNAL( released() ), this, SLOT( printDCprotocol() ));
+	disconnect(saveDClist_pushButton, SIGNAL( released() ), this, SLOT( saveDCprotocol() ));
 #endif
 	// Enable/disable "Cruise Control"-tab(s):
 	if (ok && (latestCCCCs_sup || memCCCCs_sup))
@@ -278,9 +280,11 @@ void CUcontent_DCs_engine::connectGUIelements()
 		connect(_SSMPdev, SIGNAL( memorizedCCCCs(QStringList, QStringList) ), this, SLOT( updateCCmemorizedCCsContent(QStringList, QStringList) ));
 	}
 #ifndef SMALL_RESOLUTION
-	// Connect and disable print-button temporary (until all memories have been read once):
+	// Connect and disable print/save buttons temporary (until all memories have been read once):
 	printDClist_pushButton->setDisabled(true);
+	saveDClist_pushButton->setDisabled(true);
 	connect(printDClist_pushButton, SIGNAL( released() ), this, SLOT( printDCprotocol() ));
+	connect(saveDClist_pushButton, SIGNAL( released() ), this, SLOT( saveDCprotocol() ));
 #endif
 	// NOTE: using released() instead of pressed() as workaround for a Qt-Bug occuring under MS Windows
 }
@@ -323,8 +327,9 @@ void CUcontent_DCs_engine::updateCurrentOrTemporaryDTCsContent(QStringList currO
 		}
 		setDCtableContent(currOrTempDTCs_tableWidget, currOrTempDTCs, currOrTempDTCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 	}
 }
@@ -345,8 +350,9 @@ void CUcontent_DCs_engine::updateHistoricOrMemorizedDTCsContent(QStringList hist
 		}
 		setDCtableContent(histOrMemDTCs_tableWidget, histOrMemDTCs, histOrMemDTCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 	}
 }
@@ -367,8 +373,9 @@ void CUcontent_DCs_engine::updateCClatestCCsContent(QStringList latestCCCCs, QSt
 		}
 		setDCtableContent(latestCCCCs_tableWidget, latestCCCCs, latestCCCCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 	}
 }
@@ -389,8 +396,9 @@ void CUcontent_DCs_engine::updateCCmemorizedCCsContent(QStringList memorizedCCCC
 		}
 		setDCtableContent(memorizedCCCCs_tableWidget, memorizedCCCCs, memorizedCCCCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 	}
 }
@@ -487,6 +495,38 @@ void CUcontent_DCs_engine::createDCprintTables(QTextCursor cursor)
 		}
 		// Insert table with memorized CCs into text document:
 		insertDCprintTable(cursor, memorizedCCCCsTitle_label->text(), memorizedCCCCcodes, memorizedCCCCdescriptions);
+	}
+}
+#endif
+
+
+#ifndef SMALL_RESOLUTION
+void CUcontent_DCs_engine::createDCexportText(QTextStream &stream)
+{
+	QStringList codes, descs;
+	if ((_supportedDCgroups & SSMprotocol::currentDTCs_DCgroup) || (_supportedDCgroups & SSMprotocol::temporaryDTCs_DCgroup))
+	{
+		codes = _currOrTempDTCs; descs = _currOrTempDTCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No Trouble Codes -----"); }
+		insertDCexportSection(stream, currOrTempDTCsTitle_label->text(), codes, descs);
+	}
+	if ((_supportedDCgroups & SSMprotocol::historicDTCs_DCgroup) || (_supportedDCgroups & SSMprotocol::memorizedDTCs_DCgroup))
+	{
+		codes = _histOrMemDTCs; descs = _histOrMemDTCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No Trouble Codes -----"); }
+		insertDCexportSection(stream, histOrMemDTCsTitle_label->text(), codes, descs);
+	}
+	if (_supportedDCgroups & SSMprotocol::CClatestCCs_DCgroup)
+	{
+		codes = _latestCCCCs; descs = _latestCCCCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No Cancel Codes -----"); }
+		insertDCexportSection(stream, latestCCCCsTitle_label->text(), codes, descs);
+	}
+	if (_supportedDCgroups & SSMprotocol::CCmemorizedCCs_DCgroup)
+	{
+		codes = _memorizedCCCCs; descs = _memorizedCCCCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No Cancel Codes -----"); }
+		insertDCexportSection(stream, memorizedCCCCsTitle_label->text(), codes, descs);
 	}
 }
 #endif

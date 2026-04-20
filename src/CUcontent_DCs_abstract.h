@@ -29,6 +29,10 @@
 #endif
 #include <QPrinter>
 #include <QPrintDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
+#include <QDateTime>
 #include "SSMprotocol.h"
 
 
@@ -53,7 +57,9 @@ protected:
 	void setNrOfTableRows(QTableWidget *tablewidget, unsigned int nrofUsedRows);
 #ifndef SMALL_RESOLUTION
 	virtual void createDCprintTables(QTextCursor cursor) = 0;
+	virtual void createDCexportText(QTextStream &stream) = 0;
 	void insertDCprintTable(QTextCursor cursor, QString title, QStringList codes, QStringList descriptions);
+	void insertDCexportSection(QTextStream &stream, QString title, QStringList codes, QStringList descriptions);
 #endif
 	void communicationError(QString errstr);
 
@@ -62,6 +68,7 @@ protected slots:
 	void callStop();
 #ifndef SMALL_RESOLUTION
 	void printDCprotocol();
+	void saveDCprotocol();
 #endif
 
 signals:

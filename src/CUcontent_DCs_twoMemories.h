@@ -49,6 +49,7 @@ private:
 	bool eventFilter(QObject *obj, QEvent *event);
 #ifndef SMALL_RESOLUTION
 	void createDCprintTables(QTextCursor cursor);
+	void createDCexportText(QTextStream &stream);
 #endif
 
 private slots:

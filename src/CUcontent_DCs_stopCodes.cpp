@@ -102,9 +102,11 @@ bool CUcontent_DCs_stopCodes::setup(SSMprotocol *SSMPdev)
 	currOrTempDTCsTitle_label->setEnabled(currOrTempDTCs_sup);
 	currOrTempDTCs_tableWidget->setEnabled(currOrTempDTCs_sup);
 #ifndef SMALL_RESOLUTION
-	// Deactivate and disconnect "Print"-button:
+	// Deactivate and disconnect "Print"/"Save" buttons:
 	printDClist_pushButton->setEnabled(false);
+	saveDClist_pushButton->setEnabled(false);
 	disconnect(printDClist_pushButton, SIGNAL( released() ), this, SLOT( printDCprotocol() ));
+	disconnect(saveDClist_pushButton, SIGNAL( released() ), this, SLOT( saveDCprotocol() ));
 #endif
 	// Connect start-slot:
 	if (_SSMPdev)
@@ -129,9 +131,11 @@ void CUcontent_DCs_stopCodes::connectGUIelements()
 		connect(_SSMPdev, SIGNAL( currentOrTemporaryDTCs(QStringList, QStringList, bool, bool) ), this, SLOT( updateCurrentOrTemporaryDTCsContent(QStringList, QStringList) ));
 	}
 #ifndef SMALL_RESOLUTION
-	// Connect and disable print-button temporary (until all memories have been read once):
+	// Connect and disable print/save buttons temporary (until all memories have been read once):
 	printDClist_pushButton->setDisabled(true);
+	saveDClist_pushButton->setDisabled(true);
 	connect(printDClist_pushButton, SIGNAL( released() ), this, SLOT( printDCprotocol() ));
+	connect(saveDClist_pushButton, SIGNAL( released() ), this, SLOT( saveDCprotocol() ));
 	// NOTE: using released() instead of pressed() as workaround for a Qt-Bug occuring under MS Windows
 #endif
 }
@@ -159,8 +163,9 @@ void CUcontent_DCs_stopCodes::updateCurrentOrTemporaryDTCsContent(QStringList cu
 		}
 		setDCtableContent(currOrTempDTCs_tableWidget, currOrTempDTCs, currOrTempDTCdescriptions);
 #ifndef SMALL_RESOLUTION
-		// Activate "Print" button:
+		// Activate "Print"/"Save" buttons:
 		printDClist_pushButton->setEnabled(true);
+		saveDClist_pushButton->setEnabled(true);
 #endif
 	}
 }
@@ -181,6 +186,20 @@ void CUcontent_DCs_stopCodes::createDCprintTables(QTextCursor cursor)
 		}
 		// Insert table with current/temporary DTCs into text document:
 		insertDCprintTable(cursor, currOrTempDTCsTitle_label->text(), currOrTempDTCcodes, currOrTempDTCdescriptions);
+	}
+}
+#endif
+
+
+#ifndef SMALL_RESOLUTION
+void CUcontent_DCs_stopCodes::createDCexportText(QTextStream &stream)
+{
+	QStringList codes, descs;
+	if ((_supportedDCgroups & SSMprotocol::currentDTCs_DCgroup) || (_supportedDCgroups & SSMprotocol::temporaryDTCs_DCgroup))
+	{
+		codes = _currOrTempDTCs; descs = _currOrTempDTCdescriptions;
+		if (descs.size() == 0) { codes << ""; descs << tr("----- No valid Stop Codes -----"); }
+		insertDCexportSection(stream, currOrTempDTCsTitle_label->text(), codes, descs);
 	}
 }
 #endif
