@@ -820,6 +820,7 @@ void CUcontent_MBsSWs::addMBsSWs()
 	{
 		startstopmbreading_pushButton->setEnabled(true);
 		mbswsave_pushButton->setEnabled(true);
+		csvlog_pushButton->setEnabled(true);
 	}
 	if (_MBSWmetaList.size() >= (_supportedMBs.size() + _supportedSWs.size()))
 		mbswadd_pushButton->setEnabled(false);	// "Add"-button aktivieren
@@ -872,6 +873,7 @@ void CUcontent_MBsSWs::deleteMBsSWs()
 		startstopmbreading_pushButton->setEnabled(false);
 		mbswdelete_pushButton->setEnabled(false);
 		mbswsave_pushButton->setEnabled(false);
+		csvlog_pushButton->setEnabled(false);
 	}
 	if (_MBSWmetaList.size() < (_supportedMBs.size() + _supportedSWs.size()))	// if not all MBs/SWs are selected
 		mbswadd_pushButton->setEnabled(true);
