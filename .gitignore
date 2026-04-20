@@ -9,3 +9,5 @@ platforms/
 .qmake.stash
 aqtinstall.log
 *.qm
+builds/*
+!builds/.gitkeep

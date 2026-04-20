@@ -133,6 +133,75 @@
 
 ---
 
+## Research Findings Summary (Gemini Deep Search, April 2026)
+
+Full report: [doc/subaru-diagnostics-research.md](doc/subaru-diagnostics-research.md)
+
+### Key Insights for This Fork
+
+**Target car: Subaru Outback 2006 2.5L gasoline (EJ253, SSM2 via K-Line)**
+
+1. **SSM2 K-Line is our sweet spot.** Cars from 1999–2008 use SSM2 over K-Line at 4800 baud.
+   FreeSSM already supports this fully via `SerialPassThroughDiagInterface` (VAG KKL / FTDI).
+   Our 2006 Outback falls squarely in this range — all features should work out of the box.
+
+2. **SSM2 via CAN (2008–2021)** extends the same logical protocol over ISO 15765-2 (ISO-TP).
+   Already supported via J2534 interface. No protocol changes needed for these cars, only
+   multi-frame message handling is required (already implemented in J2534DiagInterface).
+
+3. **UDS (2020+ models) is out of scope.** New Subaru Global Platform uses ISO 14229 with
+   Seed/Key crypto — completely different from SSM2. Implementing UDS would be a rewrite,
+   not an extension. We won't pursue this.
+
+4. **Security Gateway (SGW) kills open-source access for 2024+ cars.** Requires AutoAuth
+   subscription and cloud authentication. Not feasible for FreeSSM. Our focus stays on
+   pre-SGW vehicles (≤2021).
+
+5. **Tactrix OpenPort 2.0 is dead.** Company shut down, clones are unreliable (especially
+   for K-Line on 16-bit ECUs). FreeSSM's J2534 loader should support any compliant DLL —
+   this already works, but improved detection (Issue #83) is wanted by users.
+
+6. **ELM327 for SSM2 is problematic.** Cheap clones have buffer overflow issues with long
+   multi-frame SSM2 messages over CAN. For K-Line (our car), ELM327 ISO14230 mode exists
+   in FreeSSM but is disabled. Premium adapters (OBDLink MX+, vLinker MC+) handle it better.
+
+7. **PR #81 (CSV logging)** by jmadden173 already exists as a draft — tested on a 2004
+   Outback (same generation as ours). We should review and build on it rather than starting
+   from scratch.
+
+8. **BtSsm app** proves that SSM2 over K-Line + Bluetooth is viable for pre-2015 cars.
+   Users mount phone dashboards connected via VAG KKL + USB-OTG on Android.
+
+9. **External XML definitions** (like RomRaider Logger uses) are the correct long-term
+   architecture. FreeSSM currently hardcodes definitions in C++ source. Not a priority for
+   us now, but worth noting for upstream contributions.
+
+10. **Solterra uses Toyota GTS+, not SSM at all.** Completely irrelevant for FreeSSM.
+
+### What This Means for Our Priority Order
+
+| Priority | Task | Rationale |
+|----------|------|-----------|
+| **1** | CSV Data Logging (1.2) | Most requested feature, PR #81 exists as reference, directly useful for our 2006 Outback |
+| **2** | Export DTCs (1.3) | Quick win, no file export exists despite data being available |
+| **3** | Fix UI Layout (1.1) | DPI scaling issues on modern Windows |
+| **4** | Polish Translation (2.2) | Personal use, low effort |
+| **5** | ELM327 K-Line (3.1) | Enable existing disabled code — allows using cheap BT adapters for K-Line cars |
+| **6** | BT Serial Ports (3.2) | Needed for wireless diagnosis on older cars like ours |
+| **7** | Drop Qt4 (2.1) | Code cleanup, easier maintenance |
+| **8** | Charts (4.1) | Nice-to-have once logging works |
+| **9** | Qt6 Port (4.4) | Future-proofing |
+
+### Out of Scope (Confirmed by Research)
+
+- **UDS protocol implementation** — too complex, requires crypto reverse engineering
+- **Security Gateway bypass** — legally and technically infeasible for open-source
+- **e-BOXER / hybrid diagnostics** — requires UDS + CAN-FD, different ecosystem
+- **Solterra support** — Toyota platform, not Subaru SSM
+- **SSM3/4/5 compatibility** — these are dealer software brands, not protocols
+
+---
+
 ## Development Standards
 
 See repo memory: development rules applied to all changes.
