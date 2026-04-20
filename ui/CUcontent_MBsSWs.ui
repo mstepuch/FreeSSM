@@ -214,18 +214,21 @@
       </spacer>
      </item>
      <item>
-      <widget class="QCheckBox" name="csvlog_checkBox">
+      <widget class="QPushButton" name="csvlog_pushButton">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>80</width>
          <height>34</height>
         </size>
        </property>
        <property name="toolTip">
-        <string>Enable CSV data logging (select file, then press Start)</string>
+        <string>Select CSV file for data logging, then press Start</string>
        </property>
        <property name="text">
-        <string>Log</string>
+        <string>Log to CSV</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

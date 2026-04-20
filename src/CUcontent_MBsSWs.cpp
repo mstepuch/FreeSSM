@@ -53,7 +53,7 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 	mbswdelete_pushButton->setEnabled( false );
 	MBSWviews_tabWidget->setTabEnabled(1, false);
 	_valuesTableView->setEnabled(false);
-	csvlog_checkBox->setEnabled( false );
+	csvlog_pushButton->setEnabled( false );
 	updateRefreshTimeTitle();
 	clearRefreshTime();
 	// Connect signals and slots:
@@ -62,7 +62,7 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 	connect( mbswdelete_pushButton , SIGNAL( released() ), this, SLOT( deleteMBsSWs() ) );
 	connect( mbswsave_pushButton , SIGNAL( released() ), this, SLOT( saveMBsSWs() ) );
 	connect( mbswload_pushButton , SIGNAL( released() ), this, SLOT( loadMBsSWs() ) );
-	connect( csvlog_checkBox , SIGNAL( toggled(bool) ), this, SLOT( csvLogCheckBoxToggled(bool) ) );
+	connect( csvlog_pushButton , SIGNAL( released() ), this, SLOT( csvLogButtonClicked() ) );
 	connect( _valuesTableView , SIGNAL( moveUpButton_pressed() ), this, SLOT( moveUpMBsSWsOnTheTable() ) );
 	connect( _valuesTableView , SIGNAL( moveDownButton_pressed() ), this, SLOT( moveDownMBsSWsOnTheTable() ) );
 	connect( _valuesTableView , SIGNAL( resetMinMaxButton_pressed() ), this, SLOT( resetMinMaxTableValues() ) );
@@ -101,7 +101,7 @@ CUcontent_MBsSWs::~CUcontent_MBsSWs()
 	delete _valuesTableView;
 	disconnect( mbswsave_pushButton , SIGNAL( released() ), this, SLOT( saveMBsSWs() ) );
 	disconnect( mbswload_pushButton , SIGNAL( released() ), this, SLOT( loadMBsSWs() ) );
-	disconnect( csvlog_checkBox , SIGNAL( toggled(bool) ), this, SLOT( csvLogCheckBoxToggled(bool) ) );
+	disconnect( csvlog_pushButton , SIGNAL( released() ), this, SLOT( csvLogButtonClicked() ) );
 }
 
 
@@ -161,11 +161,9 @@ bool CUcontent_MBsSWs::setup(SSMprotocol *SSMPdev)
 	startstopmbreading_pushButton->setEnabled(false);
 	// Disable "Save"-button:
 	mbswsave_pushButton->setEnabled(false);
-	// Stop logging and reset checkbox:
+	// Stop logging and reset log button:
 	closeCSVFile();
-	csvlog_checkBox->setChecked(false);
-	csvlog_checkBox->setEnabled(false);
-	_csvFilePath.clear();
+	resetLogButton();
 	// Enable "Load"-button if at least MB/SW is provided by the control unit:
 	mbswload_pushButton->setEnabled( (_supportedMBs.size() + _supportedSWs.size() > 0) );
 	// Save SSMPdev:
@@ -249,14 +247,14 @@ void CUcontent_MBsSWs::setMBSWselectionUnvalidated(const std::vector<MBSWmetadat
 		startstopmbreading_pushButton->setEnabled(true);
 		mbswdelete_pushButton->setEnabled(true);
 		mbswsave_pushButton->setEnabled(true);
-		csvlog_checkBox->setEnabled(true);
+		csvlog_pushButton->setEnabled(true);
 	}
 	else
 	{
 		startstopmbreading_pushButton->setEnabled(false);
 		mbswdelete_pushButton->setEnabled(false);
 		mbswsave_pushButton->setEnabled(false);
-		csvlog_checkBox->setEnabled(false);
+		csvlog_pushButton->setEnabled(false);
 	}
 	if (_MBSWmetaList.size() >= (_supportedMBs.size() + _supportedSWs.size()))
 		mbswadd_pushButton->setEnabled(false);	// "Add"-button aktivieren
@@ -392,9 +390,9 @@ bool CUcontent_MBsSWs::startMBSWreading()
 	mbswadd_pushButton->setEnabled(false);
 	// Disable load state button
 	mbswload_pushButton->setEnabled(false);
-	// Start CSV logging if checkbox is checked:
-	csvlog_checkBox->setEnabled(false);
-	if (csvlog_checkBox->isChecked() && !_csvFilePath.isEmpty())
+	// Start CSV logging if armed:
+	csvlog_pushButton->setEnabled(false);
+	if (csvlog_pushButton->isChecked() && !_csvFilePath.isEmpty())
 		openCSVFile();
 	// Set text+icon of start/stop-button:
 	startstopmbreading_pushButton->setText(tr(" Stop  "));
@@ -442,7 +440,7 @@ bool CUcontent_MBsSWs::stopMBSWreading()
 		mbswload_pushButton->setEnabled(true);
 	// Stop CSV logging if active:
 	closeCSVFile();
-	csvlog_checkBox->setEnabled(_MBSWmetaList.size() > 0);
+	resetLogButton();
 	// Update state:
 	_MBSWreading = false;
 	return true;
@@ -1265,26 +1263,39 @@ void CUcontent_MBsSWs::errorMsg(QString title, QString message)
 }
 
 
-void CUcontent_MBsSWs::csvLogCheckBoxToggled(bool checked)
+void CUcontent_MBsSWs::csvLogButtonClicked()
 {
-	if (checked)
+	if (csvlog_pushButton->isChecked())
 	{
-		// Ask for output file path:
+		// IDLE → ARMED: Ask for output file path
 		QString fileName = QFileDialog::getSaveFileName(this,
 			tr("Save CSV Log"),
 			QDir::homePath() + "/FreeSSM_log.csv",
 			tr("CSV files (*.csv);;All files (*)"));
 		if (fileName.isEmpty())
 		{
-			csvlog_checkBox->setChecked(false);
+			csvlog_pushButton->setChecked(false);
 			return;
 		}
 		_csvFilePath = fileName;
+		// Show short filename on button:
+		QFileInfo fi(fileName);
+		csvlog_pushButton->setText(QString::fromUtf8("\xe2\x9c\x93 ") + fi.fileName());
 	}
 	else
 	{
-		_csvFilePath.clear();
+		// ARMED → IDLE: Disarm
+		resetLogButton();
 	}
+}
+
+
+void CUcontent_MBsSWs::resetLogButton()
+{
+	_csvFilePath.clear();
+	csvlog_pushButton->setChecked(false);
+	csvlog_pushButton->setText(tr("Log to CSV"));
+	csvlog_pushButton->setEnabled(_MBSWmetaList.size() > 0 && !_MBSWreading);
 }
 
 
@@ -1298,8 +1309,7 @@ bool CUcontent_MBsSWs::openCSVFile()
 		errorMsg(tr("Error"), tr("Error: failed to open CSV log file for writing."));
 		delete _csvFile;
 		_csvFile = NULL;
-		csvlog_checkBox->setChecked(false);
-		_csvFilePath.clear();
+		resetLogButton();
 		return false;
 	}
 	_csvStream = new QTextStream(_csvFile);

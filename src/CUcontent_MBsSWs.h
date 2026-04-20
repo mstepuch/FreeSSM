@@ -145,9 +145,10 @@ private slots:
 	void resetMinMaxTableValues();
 	void setDeleteButtonEnabledState();
 	void switchTimeMode();
-	void csvLogCheckBoxToggled(bool checked);
+	void csvLogButtonClicked();
 	bool openCSVFile();
 	void closeCSVFile();
+	void resetLogButton();
 
 signals:
 	void error();
