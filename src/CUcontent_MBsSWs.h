@@ -114,6 +114,7 @@ private:
 	QTextStream *_csvStream;
 	bool _csvLogging;
 	QElapsedTimer _csvTimer;
+	QString _csvFilePath;
 
 	void setupTimeModeUiElements();
 	bool validateMBSWselection(const std::vector<MBSWmetadata_dt>& MBSWmetaList);
@@ -144,8 +145,9 @@ private slots:
 	void resetMinMaxTableValues();
 	void setDeleteButtonEnabledState();
 	void switchTimeMode();
-	void toggleCSVLogging();
-	void stopCSVLogging();
+	void csvLogCheckBoxToggled(bool checked);
+	bool openCSVFile();
+	void closeCSVFile();
 
 signals:
 	void error();
