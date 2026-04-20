@@ -29,6 +29,9 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 	_timemode = settings.timeMode;
 	_lastrefreshduration_ms = 0;
 	_MBSWreading = false;
+	_csvFile = NULL;
+	_csvStream = NULL;
+	_csvLogging = false;
 
 	// Setup GUI:
 	setupUi(this);
@@ -49,6 +52,7 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 	mbswdelete_pushButton->setEnabled( false );
 	MBSWviews_tabWidget->setTabEnabled(1, false);
 	_valuesTableView->setEnabled(false);
+	mbswlog_pushButton->setEnabled( false );
 	updateRefreshTimeTitle();
 	clearRefreshTime();
 	// Connect signals and slots:
@@ -57,6 +61,7 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 	connect( mbswdelete_pushButton , SIGNAL( released() ), this, SLOT( deleteMBsSWs() ) );
 	connect( mbswsave_pushButton , SIGNAL( released() ), this, SLOT( saveMBsSWs() ) );
 	connect( mbswload_pushButton , SIGNAL( released() ), this, SLOT( loadMBsSWs() ) );
+	connect( mbswlog_pushButton , SIGNAL( released() ), this, SLOT( toggleCSVLogging() ) );
 	connect( _valuesTableView , SIGNAL( moveUpButton_pressed() ), this, SLOT( moveUpMBsSWsOnTheTable() ) );
 	connect( _valuesTableView , SIGNAL( moveDownButton_pressed() ), this, SLOT( moveDownMBsSWsOnTheTable() ) );
 	connect( _valuesTableView , SIGNAL( resetMinMaxButton_pressed() ), this, SLOT( resetMinMaxTableValues() ) );
@@ -73,6 +78,7 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 
 CUcontent_MBsSWs::~CUcontent_MBsSWs()
 {
+	stopCSVLogging();
 	if (_SSMPdev)
 	{
 		_SSMPdev->stopMBSWreading();
@@ -94,6 +100,7 @@ CUcontent_MBsSWs::~CUcontent_MBsSWs()
 	delete _valuesTableView;
 	disconnect( mbswsave_pushButton , SIGNAL( released() ), this, SLOT( saveMBsSWs() ) );
 	disconnect( mbswload_pushButton , SIGNAL( released() ), this, SLOT( loadMBsSWs() ) );
+	disconnect( mbswlog_pushButton , SIGNAL( released() ), this, SLOT( toggleCSVLogging() ) );
 }
 
 
@@ -153,6 +160,9 @@ bool CUcontent_MBsSWs::setup(SSMprotocol *SSMPdev)
 	startstopmbreading_pushButton->setEnabled(false);
 	// Disable "Save"-button:
 	mbswsave_pushButton->setEnabled(false);
+	// Disable "Log"-button and stop logging:
+	stopCSVLogging();
+	mbswlog_pushButton->setEnabled(false);
 	// Enable "Load"-button if at least MB/SW is provided by the control unit:
 	mbswload_pushButton->setEnabled( (_supportedMBs.size() + _supportedSWs.size() > 0) );
 	// Save SSMPdev:
@@ -377,6 +387,8 @@ bool CUcontent_MBsSWs::startMBSWreading()
 	mbswadd_pushButton->setEnabled(false);
 	// Disable load state button
 	mbswload_pushButton->setEnabled(false);
+	// Enable log button
+	mbswlog_pushButton->setEnabled(true);
 	// Set text+icon of start/stop-button:
 	startstopmbreading_pushButton->setText(tr(" Stop  "));
 	startstopmbreading_pushButton->setIcon( QIcon(QString::fromUtf8(":/icons/chrystal/32x32/player_stop.png")) );
@@ -421,6 +433,9 @@ bool CUcontent_MBsSWs::stopMBSWreading()
 	// Enable load button (if at least MB/SW is provided by the control unit):
 	if (_supportedMBs.size() + _supportedSWs.size() > 0)
 		mbswload_pushButton->setEnabled(true);
+	// Stop CSV logging if active:
+	stopCSVLogging();
+	mbswlog_pushButton->setEnabled(false);
 	// Update state:
 	_MBSWreading = false;
 	return true;
@@ -709,6 +724,20 @@ void CUcontent_MBsSWs::processMBSWRawValues(const std::vector<unsigned int>& raw
 	}
 	// Display new values:
 	_valuesTableView->updateMBSWvalues(valueStrList, minValueStrList, maxValueStrList, unitStrList);
+	// Write CSV row if logging is active:
+	if (_csvLogging && _csvStream)
+	{
+		// Elapsed time in seconds with 3 decimal places:
+		double elapsedSec = _csvTimer.elapsed() / 1000.0;
+		*_csvStream << QString::number(elapsedSec, 'f', 3);
+		for (size_t i = 0; i < _MBSWmetaList.size(); i++)
+		{
+			const unsigned int tpi = _tableRowPosIndexes.at(i);
+			*_csvStream << ";" << valueStrList.at(tpi);
+		}
+		*_csvStream << "\n";
+		_csvStream->flush();
+	}
 	// Output refresh duration:
 	updateTimeInfo(refreshduration_ms);
 }
@@ -1226,4 +1255,86 @@ void CUcontent_MBsSWs::errorMsg(QString title, QString message)
 	msg.show();
 	msg.exec();
 	msg.close();
+}
+
+
+void CUcontent_MBsSWs::toggleCSVLogging()
+{
+	if (_csvLogging)
+	{
+		stopCSVLogging();
+		return;
+	}
+	// No MBs/SWs selected or not reading:
+	if (_MBSWmetaList.empty() || !_MBSWreading)
+		return;
+	// Ask for output file:
+	QString fileName = QFileDialog::getSaveFileName(this,
+		tr("Save CSV Log"),
+		QDir::homePath() + "/FreeSSM_log.csv",
+		tr("CSV files (*.csv);;All files (*)"));
+	if (fileName.isEmpty())
+	{
+		mbswlog_pushButton->setChecked(false);
+		return;
+	}
+	// Open file:
+	_csvFile = new QFile(fileName);
+	if (!_csvFile->open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		errorMsg(tr("Error"), tr("Error: failed to open CSV log file for writing."));
+		delete _csvFile;
+		_csvFile = NULL;
+		mbswlog_pushButton->setChecked(false);
+		return;
+	}
+	_csvStream = new QTextStream(_csvFile);
+	// Write header row:
+	*_csvStream << "Time [s]";
+	for (size_t i = 0; i < _MBSWmetaList.size(); i++)
+	{
+		const MBSWmetadata_dt& meta = _MBSWmetaList.at(i);
+		QString title;
+		QString unit;
+		if (meta.blockType == BlockType::MB)
+		{
+			title = _supportedMBs.at(meta.nativeIndex).title;
+			unit = _supportedMBs.at(meta.nativeIndex).unit;
+		}
+		else
+		{
+			title = _supportedSWs.at(meta.nativeIndex).title;
+			unit = "";
+		}
+		*_csvStream << ";" << title;
+		if (!unit.isEmpty())
+			*_csvStream << " [" << unit << "]";
+	}
+	*_csvStream << "\n";
+	_csvStream->flush();
+	// Start timer:
+	_csvTimer.start();
+	_csvLogging = true;
+	mbswlog_pushButton->setChecked(true);
+}
+
+
+void CUcontent_MBsSWs::stopCSVLogging()
+{
+	if (!_csvLogging)
+		return;
+	_csvLogging = false;
+	if (_csvStream)
+	{
+		_csvStream->flush();
+		delete _csvStream;
+		_csvStream = NULL;
+	}
+	if (_csvFile)
+	{
+		_csvFile->close();
+		delete _csvFile;
+		_csvFile = NULL;
+	}
+	mbswlog_pushButton->setChecked(false);
 }

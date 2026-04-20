@@ -291,6 +291,21 @@ void Preferences::interfacetest()
 	QMessageBox *msgbox;
 	FSSM_ProgressDialog *progressMsgBox = NULL;
 	QFont msgboxfont;
+	// SIMULATION MODE: skip real hardware test
+	if (_newinterfacetype == AbstractDiagInterface::interface_type::simulated)
+	{
+		msgbox = new QMessageBox(QMessageBox::Information, tr("Interface test"),
+			tr("Simulation mode: no real hardware test needed.\nAll protocols are available."),
+			QMessageBox::Ok, this);
+		msgboxfont = msgbox->font();
+		msgboxfont.setPointSize(9);
+		msgbox->setFont(msgboxfont);
+		msgbox->show();
+		msgbox->exec();
+		msgbox->close();
+		delete msgbox;
+		return;
+	}
 	// PREPARE INTERFACE:
 	AbstractDiagInterface *diagInterface = NULL;
 	if (_newinterfacetype == AbstractDiagInterface::interface_type::serialPassThrough)

@@ -212,8 +212,10 @@ unsigned char SimulatedDiagInterface::simulateValue(unsigned int addr)
 		case 0x62: // Ignition switch state: bit 3 must be set for ignition ON
 			return 0x08;
 		default:
-			// Generic oscillating value for any unmapped address
-			return static_cast<unsigned char>(128 + static_cast<int>(100.0 * std::sin(t + addr * 0.37)));
+			// Return deterministic stable values for unmapped addresses (DTC flags, etc.)
+			// Use address-based hash so each address has a unique but constant value.
+			// Set ~25% of bits to create a realistic DTC pattern that doesn't flicker.
+			return static_cast<unsigned char>((addr * 31 + 17) & 0xFF);
 	}
 }
 

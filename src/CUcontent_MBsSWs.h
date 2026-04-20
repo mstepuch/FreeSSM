@@ -35,6 +35,10 @@
 #include "SSMprotocol.h"
 #include "libFSSM.h"
 
+#include <QFile>
+#include <QTextStream>
+#include <QElapsedTimer>
+
 // To get stdout for my errors
 #include <iostream>
 // To do binary file operations storing the current setup
@@ -106,6 +110,11 @@ private:
 	std::vector<unsigned int> _tableRowPosIndexes; /* index of the row at which the MB/SW is displayed in the values-table-widget */
 	bool _MBSWreading;
 
+	QFile *_csvFile;
+	QTextStream *_csvStream;
+	bool _csvLogging;
+	QElapsedTimer _csvTimer;
+
 	void setupTimeModeUiElements();
 	bool validateMBSWselection(const std::vector<MBSWmetadata_dt>& MBSWmetaList);
 	void setMBSWselectionUnvalidated(const std::vector<MBSWmetadata_dt>& MBSWmetaList);
@@ -135,6 +144,8 @@ private slots:
 	void resetMinMaxTableValues();
 	void setDeleteButtonEnabledState();
 	void switchTimeMode();
+	void toggleCSVLogging();
+	void stopCSVLogging();
 
 signals:
 	void error();
