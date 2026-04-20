@@ -134,6 +134,11 @@
      <string>AT-command controlled (ELM / AGV / Diamex)</string>
     </property>
    </item>
+   <item>
+    <property name="text">
+     <string>Simulation / Demo</string>
+    </property>
+   </item>
   </widget>
   <widget class="QComboBox" name="language_comboBox">
    <property name="geometry">

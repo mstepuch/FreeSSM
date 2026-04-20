@@ -25,6 +25,7 @@ HEADERS += src/FreeSSM.h \
            src/ActuatorTestDlg.h \
            src/AbstractDiagInterface.h \
            src/ATcommandControlledDiagInterface.h \
+           src/SimulatedDiagInterface.h \
            src/SerialPassThroughDiagInterface.h \
            src/J2534DiagInterface.h \
            src/J2534.h \
@@ -79,6 +80,7 @@ SOURCES += src/main.cpp \
            src/ActuatorTestDlg.cpp \
            src/AbstractDiagInterface.cpp \
            src/ATcommandControlledDiagInterface.cpp \
+           src/SimulatedDiagInterface.cpp \
            src/SerialPassThroughDiagInterface.cpp \
            src/J2534DiagInterface.cpp \
            src/J2534misc.cpp \

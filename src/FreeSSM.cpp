@@ -19,6 +19,7 @@
 
 #include "FreeSSM.h"
 #include "CmdLine.h"
+#include "SimulatedDiagInterface.h"
 
 
 
@@ -190,10 +191,15 @@ FreeSSM::FreeSSM(QApplication *app)
 		}
 		// NOTE: otherwise _iface_filename remains empty
 	}
-	else	// Serial Pass-Through, AT-comand controlled (e.g. ELM, AGV, Diamex) or invalid
+	else	// Serial Pass-Through, AT-comand controlled (e.g. ELM, AGV, Diamex), Simulation, or invalid
 	{
 		if (savedinterfacetype == QString::number(static_cast<int>(AbstractDiagInterface::interface_type::ATcommandControlled)))
 			_iface_type = AbstractDiagInterface::interface_type::ATcommandControlled;
+		else if (savedinterfacetype == QString::number(static_cast<int>(AbstractDiagInterface::interface_type::simulated)))
+		{
+			_iface_type = AbstractDiagInterface::interface_type::simulated;
+			_iface_filename = "simulation";
+		}
 		else
 			_iface_type = AbstractDiagInterface::interface_type::serialPassThrough;
 		std::vector<std::string> portlist;
@@ -437,6 +443,10 @@ AbstractDiagInterface * FreeSSM::initInterface()
 	else if (_iface_type == AbstractDiagInterface::interface_type::ATcommandControlled)
 	{
 		diagInterface = new ATcommandControlledDiagInterface;
+	}
+	else if (_iface_type == AbstractDiagInterface::interface_type::simulated)
+	{
+		diagInterface = new SimulatedDiagInterface;
 	}
 	else
 	{

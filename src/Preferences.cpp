@@ -18,6 +18,7 @@
  */
 
 #include "Preferences.h"
+#include "SimulatedDiagInterface.h"
 
 
 
@@ -87,6 +88,12 @@ Preferences::Preferences(QMainWindow *parent, AbstractDiagInterface::interface_t
 		selectInterfaceType(2);
 		if (_r_interfacefilename != NULL)
 			if_name_index = interfaceName_comboBox->findText(*_r_interfacefilename);
+	}
+	else if (_newinterfacetype == AbstractDiagInterface::interface_type::simulated) // Simulation / Demo
+	{
+		interfaceType_comboBox->setCurrentIndex(3);
+		selectInterfaceType(3);
+		if_name_index = 0;
 	}
 	else	// Serial Pass-Through
 	{
@@ -235,6 +242,13 @@ void Preferences::selectInterfaceType(int index)
 		for (unsigned int k=0; k<portlist.size(); k++)
 			deviceNames.push_back(QString::fromStdString(portlist.at(k)));
 	}
+	else if (index == 3)	// Simulation / Demo
+	{
+		_newinterfacetype = AbstractDiagInterface::interface_type::simulated;
+		interfaceName_label->setText(tr("Simulation:"));
+		deviceNames.push_back("Simulated ECU (EJ253 2.5L)");
+		_newinterfacefilename = "simulation";
+	}
 	if (deviceNames.size())
 	{
 		interfaceName_comboBox->addItems(deviceNames);
@@ -290,6 +304,10 @@ void Preferences::interfacetest()
 	else if (_newinterfacetype == AbstractDiagInterface::interface_type::ATcommandControlled)
 	{
 		diagInterface = new ATcommandControlledDiagInterface;
+	}
+	else if (_newinterfacetype == AbstractDiagInterface::interface_type::simulated)
+	{
+		diagInterface = new SimulatedDiagInterface;
 	}
 	else
 	{
