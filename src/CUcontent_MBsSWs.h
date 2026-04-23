@@ -142,6 +142,7 @@ private slots:
 	bool saveMBsSWs(QString filename = "");
 	void moveUpMBsSWsOnTheTable();
 	void moveDownMBsSWsOnTheTable();
+	void moveRowOnTable(int from, int to);
 	void resetMinMaxTableValues();
 	void setDeleteButtonEnabledState();
 	void switchTimeMode();

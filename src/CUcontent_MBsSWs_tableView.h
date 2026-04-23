@@ -54,6 +54,7 @@ private:
 	QIcon iconSW;
 	unsigned int _nrofMBsSWs;
 	unsigned int _maxrowsvisible;
+	int _dragStartRow;
 
 	void resizeEvent(QResizeEvent *event);
 	bool eventFilter(QObject *obj, QEvent *event);
@@ -70,6 +71,7 @@ signals:
 	void moveDownButton_pressed();
 	void resetMinMaxButton_pressed();
 	void itemSelectionChanged();
+	void rowMoveRequested(int from, int to);
 
 };
 

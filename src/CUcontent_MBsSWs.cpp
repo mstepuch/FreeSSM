@@ -65,6 +65,7 @@ CUcontent_MBsSWs::CUcontent_MBsSWs(MBSWsettings_dt settings, QWidget *parent) : 
 	connect( csvlog_pushButton , SIGNAL( released() ), this, SLOT( csvLogButtonClicked() ) );
 	connect( _valuesTableView , SIGNAL( moveUpButton_pressed() ), this, SLOT( moveUpMBsSWsOnTheTable() ) );
 	connect( _valuesTableView , SIGNAL( moveDownButton_pressed() ), this, SLOT( moveDownMBsSWsOnTheTable() ) );
+	connect( _valuesTableView , SIGNAL( rowMoveRequested(int,int) ), this, SLOT( moveRowOnTable(int,int) ) );
 	connect( _valuesTableView , SIGNAL( resetMinMaxButton_pressed() ), this, SLOT( resetMinMaxTableValues() ) );
 	connect( _valuesTableView , SIGNAL( itemSelectionChanged() ), this, SLOT( setDeleteButtonEnabledState() ) );
 	connect( _timemode_pushButton , SIGNAL( released() ), this, SLOT( switchTimeMode() ) );
@@ -92,6 +93,7 @@ CUcontent_MBsSWs::~CUcontent_MBsSWs()
 	disconnect( mbswdelete_pushButton , SIGNAL( released() ), this, SLOT( deleteMBsSWs() ) );
 	disconnect( _valuesTableView , SIGNAL( moveUpButton_pressed() ), this, SLOT( moveUpMBsSWsOnTheTable() ) );
 	disconnect( _valuesTableView , SIGNAL( moveDownButton_pressed() ), this, SLOT( moveDownMBsSWsOnTheTable() ) );
+	disconnect( _valuesTableView , SIGNAL( rowMoveRequested(int,int) ), this, SLOT( moveRowOnTable(int,int) ) );
 	disconnect( _valuesTableView , SIGNAL( resetMinMaxButton_pressed() ), this, SLOT( resetMinMaxTableValues() ) );
 	disconnect( _valuesTableView , SIGNAL( itemSelectionChanged() ), this, SLOT( setDeleteButtonEnabledState() ) );
 	disconnect( _timemode_pushButton , SIGNAL(released() ), this, SLOT( switchTimeMode() ) );
@@ -1130,6 +1132,36 @@ void CUcontent_MBsSWs::moveDownMBsSWsOnTheTable()
 	_valuesTableView->selectMBSWtableRows(rowToMoveUpTargetIndex+1, rowToMoveUpIndex);
 	// SCROLL TO POSITION OF LAST SELECTED ROW:
 	_valuesTableView->scrollMBSWtable(rowToMoveUpIndex);
+}
+
+
+void CUcontent_MBsSWs::moveRowOnTable(int from, int to)
+{
+	if (from < 0 || to < 0 || from == to)
+		return;
+	if (from >= (int)_MBSWmetaList.size() || to >= (int)_MBSWmetaList.size())
+		return;
+	for (size_t k = 0; k < _tableRowPosIndexes.size(); k++)
+	{
+		int pos = (int)_tableRowPosIndexes.at(k);
+		if (pos == from)
+		{
+			_tableRowPosIndexes[k] = to;
+		}
+		else if (from < to)
+		{
+			if (pos > from && pos <= to)
+				_tableRowPosIndexes[k] = pos - 1;
+		}
+		else
+		{
+			if (pos >= to && pos < from)
+				_tableRowPosIndexes[k] = pos + 1;
+		}
+	}
+	displayMBsSWs();
+	_valuesTableView->selectMBSWtableRows(to, to);
+	_valuesTableView->scrollMBSWtable(to);
 }
 
 

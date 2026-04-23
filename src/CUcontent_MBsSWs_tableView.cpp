@@ -27,6 +27,7 @@ CUcontent_MBsSWs_tableView::CUcontent_MBsSWs_tableView(QWidget *parent, bool sho
 	QHeaderView *headerview;
 	_nrofMBsSWs = 0;
 	_maxrowsvisible = 0;
+	_dragStartRow = -1;
 
 	// Setup GUI:
 	setupUi(this);
@@ -57,10 +58,17 @@ CUcontent_MBsSWs_tableView::CUcontent_MBsSWs_tableView(QWidget *parent, bool sho
 #else
 	headerview->setSectionResizeMode(QHeaderView::Fixed);
 #endif
+	headerview->setDefaultSectionSize(20);
 	/* NOTE: Current method for calculating ther nr. of needed rows
 	 * assumes all rows to have the same constant height */
+	// Enable drag-and-drop row reordering:
+	selectedMBsSWs_tableWidget->setDragEnabled(true);
+	selectedMBsSWs_tableWidget->setAcceptDrops(true);
+	selectedMBsSWs_tableWidget->setDragDropMode(QAbstractItemView::InternalMove);
+	selectedMBsSWs_tableWidget->setDropIndicatorShown(true);
 	// Install event-filter for MB/SW-table:
 	selectedMBsSWs_tableWidget->viewport()->installEventFilter(this);
+	selectedMBsSWs_tableWidget->installEventFilter(this);
 	// (Un)check min/max toggle-buttons:
 	showMin_pushButton->setChecked(showMin);
 	showMax_pushButton->setChecked(showMax);
@@ -313,6 +321,23 @@ bool CUcontent_MBsSWs_tableView::eventFilter(QObject *obj, QEvent *event)
 				return true;	// filter out
 			else
 				return false;
+		}
+		if (event->type() == QEvent::MouseButtonPress)
+		{
+			QMouseEvent *me = static_cast<QMouseEvent*>(event);
+			_dragStartRow = selectedMBsSWs_tableWidget->indexAt(me->pos()).row();
+		}
+	}
+	if (obj == selectedMBsSWs_tableWidget)
+	{
+		if (event->type() == QEvent::Drop)
+		{
+			QDropEvent *de = static_cast<QDropEvent*>(event);
+			int toRow = selectedMBsSWs_tableWidget->indexAt(de->pos()).row();
+			if (_dragStartRow >= 0 && toRow >= 0 && _dragStartRow != toRow)
+				emit rowMoveRequested(_dragStartRow, toRow);
+			_dragStartRow = -1;
+			return true; // block Qt's default item-level move (data is rebuilt by displayMBsSWs)
 		}
 	}
 	// Pass the event on to the parent class
