@@ -1339,9 +1339,18 @@ def chk_maf_voltage_consistency(ctx: CheckCtx) -> Finding:
 
 
 def chk_o2_pre_health(ctx: CheckCtx) -> Finding:
-    """Pre-cat wideband sensor: in cruise the heater current should be steady
-    (around mid-range) and resistance reasonable. Drift here precedes lambda
-    oscillation. We just check that they exist and are not pegged.
+    """Pre-cat wideband sensor (LSU 4.9 / Denso UEGO).
+
+    Subaru SSM2 reports two channels:
+      - "Front O2 Sensor #1 Current"   = pumping current Ipump (mA).
+        At lambda ≈ 1.0 it sits near 0 mA. Negative under rich, positive
+        under lean. Std should be modest in CL (idle/cruise) — wild swings
+        mean a flapping sensor or unsettled fuel.
+      - "Front O2 Sensor #1 Resistance" = Nernst-cell impedance Ri (Ω).
+        ECU drives the heater so Ri stays at the operating set-point —
+        roughly 30 Ω (LSU 4.9) up to ~80 Ω (some Denso). Sustained drift
+        well above 100 Ω after warm-up means the sensor is cooling off
+        or aging. Around 30 Ω is healthy, not aging.
     """
     cur = ctx.log.col("o2_pre_i")
     res = ctx.log.col("o2_pre_r")
@@ -1356,15 +1365,23 @@ def chk_o2_pre_health(ctx: CheckCtx) -> Finding:
     cur_med = statistics.median(cur_vals)
     res_med = statistics.median(res_vals)
     cur_std = statistics.pstdev(cur_vals)
-    # No hard EJ253 spec available; use plausibility bands.
+    # Plausibility bands (no per-VIN spec; we err on the safe side).
     sev = "pass"
     notes = []
-    if cur_std > abs(cur_med) * 0.6 and abs(cur_med) > 0.05:
+    if cur_std > abs(cur_med) * 0.6 and abs(cur_med) > 0.1:
         sev = "warn"; notes.append("heater current is volatile")
-    if res_med > 30:
-        sev = "warn"; notes.append(f"resistance high ({res_med:.0f} Ω) \u2014 sensor aging?")
-    msg = (f"Pre-cat O2: current median {cur_med:.2f} mA (std {cur_std:.2f}), "
-           f"resistance median {res_med:.1f} Ω. " + ("; ".join(notes) if notes else "Looks healthy."))
+    if res_med > 120:
+        sev = "warn"
+        notes.append(f"Ri high ({res_med:.0f} Ω) — sensor not reaching operating temperature; "
+                     "check heater wiring / connector / heater fuse")
+    elif res_med > 80:
+        # Could be an OEM Denso target; flag info-level.
+        sev = "info" if sev == "pass" else sev
+        notes.append(f"Ri {res_med:.0f} Ω — within plausible Denso operating band, monitor over time")
+    if not notes:
+        notes.append(f"Ri {res_med:.0f} Ω, Ipump median {cur_med:+.2f} mA — sensor in operating range.")
+    msg = (f"Pre-cat O2: Ipump median {cur_med:+.2f} mA (std {cur_std:.2f} mA), "
+           f"Ri median {res_med:.1f} Ω. " + "; ".join(notes))
     return Finding("o2_pre_health", "Pre-cat O2 health", sev, res_med, msg,
                    evidence={"cur_med": cur_med, "cur_std": cur_std, "res_med": res_med})
 
