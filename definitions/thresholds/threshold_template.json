@@ -1,0 +1,2209 @@
+{
+  "_comment": "FreeSSM Threshold Template - Fill in values for your specific engine/ECU",
+  "_instructions": "Set normal_min/normal_max for green range, warn_min/warn_max for yellow range. Values beyond warn = red. Set to null to disable threshold for a sensor.",
+  "engine": "",
+  "rom_id": "",
+  "description": "",
+  "measured_blocks": {
+    "Engine Speed": {
+      "unit": "rpm",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Manifold Absolute Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Learning #2": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Correction #2": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Learning #1": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Correction #1": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Coolant Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Engine Load": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Front O2 Sensor #2 Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Rear O2 Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Front O2 Sensor #1 Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Throttle Opening Angle": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Mass Air Flow": {
+      "unit": "g/s",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Intake Air Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Ignition Timing": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Vehicle Speed": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Atmosphere Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Knocking Correction": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Injection #2 Pulse": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Injection #1 Pulse": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Differential Pressure Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Throttle Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air Flow Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Battery Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Front O2 Sensor #1 Heater Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Accelerator Pedal Travel": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Learned Ignition Timing": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "CO Adjustment Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Tank Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Pressure Differential Sensor": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Manifold Relative Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Tumble Generator Valve (TGV) Position Sensor (Right)": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Canister Purge Control (CPC) Valve Duty Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Secondary Wastegate Duty Cycle": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Primary Wastegate Duty Cycle": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Radiator Fan Control": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Level Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Front O2 Sensor #2 Heater Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Rear O2 Sensor Heater Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Pump Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Alternator Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Number of Exhaust Gas Recirculation (EGR) Steps": {
+      "unit": "steps",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Idle Speed Control (ISC) Valve Steps": {
+      "unit": "steps",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Heater Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Lean Correction": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Idle Speed Control (ISC) Valve Duty Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Tumble Generator Valve (TGV) Position Sensor (Left)": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #2 Current": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #1 Current": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Current (Left, Intake)": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Current (Right, Intake)": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Duty (Left, Intake)": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Duty (Right, Intake)": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Variable Valve Timing (VVT) Advance Angle Amount (Left, Intake)": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Variable Valve Timing (VVT) Advance Angle Amount (Right, Intake)": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Adjust Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Rear O2 Sensor Heater Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Learning #3": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Correction #3": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #2 Lambda": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #1 Lambda": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #2 Resistance": {
+      "unit": "ohms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #1 Resistance": {
+      "unit": "ohms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Turbine Revolution Speed": {
+      "unit": "rpm",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Transfer Duty Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Lock Up Duty Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Line Pressure Duty Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Gear Position": {
+      "unit": "gear",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "ATF Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Front Wheel Speed": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Low Clutch Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Lateral G Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #2 Heater Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Sensor #1 Heater Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Manifold Pressure Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Rear Wheel Speed": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Brake Clutch Duty Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Center Differential Indicate Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Center Differential Real Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "AT Turbine Speed 2": {
+      "unit": "rpm",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "AT Turbine Speed 1": {
+      "unit": "rpm",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Voltage Center Differential Switch": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "ATF Temperature 2": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Low & Reverse Brake (L&R B) Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "High Clutch Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Throttle Motor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Throttle Motor Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Throttle Sensor Closed Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "SI-Drive Mode": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Temperature 2": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Main-Accelerator Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Sub-Accelerator Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Main-Throttle Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Sub-Throttle Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Tank Air Presser Pressure": {
+      "unit": "MPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Odometer": {
+      "unit": "km",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fuel Level Sensor Resistance": {
+      "unit": "ohms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Learning #4": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air/Fuel Correction #4": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Memorized Cruise Speed": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Secondary Air Flow": {
+      "unit": "g/s",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Secondary Air Piping Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Switching Solenoid Valve (OSV) Current (Left)": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Switching Solenoid Valve (OSV) Current (Right)": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Switching Solenoid Valve (OSV) Duty (Left)": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Switching Solenoid Valve (OSV) Duty (Right)": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "VVL Lift Mode": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Current (Left, Exhaust)": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Current (Right, Exhaust)": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Duty (Left, Exhaust)": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Flow Control Solenoid Valve (OCV) Duty (Right, Exhaust)": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Variable Valve Timing (VVT) Retard Angle (Left, Exhaust)": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Variable Valve Timing (VVT) Retard Angle (Right, Exhaust)": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Yaw Rate Sensor Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "AWD Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "L/U Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "P/L Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "I/C Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "F/B Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "D/C Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "H&LR/C Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Yaw Rate & G Sensor Reference Voltage": {
+      "unit": "V",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "AWD Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "L/U Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "P/L Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "I/C Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "F/B Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "D/C Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "H&LR/C Solenoid Valve Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fwd/B Solenoid Valve Target Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Fwd/B Solenoid Valve Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Steering Angle Sensor": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Wheel Speed Rear Left": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Wheel Speed Rear Right": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Wheel Speed Front Left": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Wheel Speed Front Right": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Learned Ignition Timing Correction": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Roughness Monitor Cylinder #6": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Roughness Monitor Cylinder #5": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Roughness Monitor Cylinder #4": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Roughness Monitor Cylinder #3": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Roughness Monitor Cylinder #2": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Roughness Monitor Cylinder #1": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Recirculation (EGR) Valve Opening Angle": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Recirculation (EGR) Target Valve Opening Angle": {
+      "unit": "deg",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Air Mass": {
+      "unit": "mg/cyl",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Target Intake Air Amount": {
+      "unit": "mg/cyl",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Target Intake Manifold Pressure": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Number of Times Injected": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Final Injection Amount": {
+      "unit": "mm³",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Main Injection Period": {
+      "unit": "°CA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Target Fuel Pump Current": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Electric Power Steering Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Boost Pressure Feedback": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Target Engine Speed": {
+      "unit": "rpm",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Intake Air Temperature (combined)": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Common Rail Pressure": {
+      "unit": "MPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Common Rail Target Pressure": {
+      "unit": "MPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Recirculation (EGR) Duty": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Drivers Control Center Differential (DCCD) Mode": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Drivers Control Center Differential (DCCD) Torque Allocation": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Lateral G": {
+      "unit": "m/s²",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Yaw Rate": {
+      "unit": "deg/s",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Quantity Correction Cylinder #4": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Quantity Correction Cylinder #3": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Quantity Correction Cylinder #2": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Quantity Correction Cylinder #1": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Interior Heater": {
+      "unit": "Steps",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Mileage after Injector Replacement": {
+      "unit": "km",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Mileage after Injector Learning": {
+      "unit": "km",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Actual Fuel Pump Current": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Alternator Control Mode": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Battery Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Battery Current": {
+      "unit": "A",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Oil Dilution Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Soot Accumulation Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Estimated Temperature of the Diesel Particulate Filter (DPF)": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Estimated Catalyst Temperature": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Temperature at Diesel Particulate Filter (DPF) Inlet": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Exhaust Gas Temperature at Catalyst Inlet": {
+      "unit": "°C",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Pressure Difference between Diesel Particulate Filter (DPF) Inlet and Outlet": {
+      "unit": "kPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Cumulative Ash Ratio": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Automatic Transmission Fluid (ATF) Deterioration Degree": {
+      "unit": "%",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "ABS/VDC Rear Wheel Mean Wheel Speed": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "ABS/VDC Front Wheel Mean Wheel Speed": {
+      "unit": "km/h",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Front-Rear Wheel Rotation Ratio": {
+      "unit": "",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 1-2": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 1-1": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Diesel Particulate Filter (DPF) Regeneration Count": {
+      "unit": "Times",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Running Distance since last Diesel Particulate Filter (DPF) Regeneration": {
+      "unit": "km",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Estimated Distance to Oil Change": {
+      "unit": "km",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Actual Common Rail Pressure (Time Syncronized)": {
+      "unit": "MPa",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Accumulated Count of Overspeed Instances (High RPM)": {
+      "unit": "Time",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Accumulated Count of Overspeed Instances (Very High RPM)": {
+      "unit": "Time",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 3-2": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 3-1": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 2-4": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 2-3": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 2-2": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 2-1": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 1-4": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 1-3": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 5-2": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 5-1": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 4-4": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 4-3": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 4-2": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 4-1": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 3-4": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 3-3": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Final Main Injection Period": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Individual Pump Difference Learning Value": {
+      "unit": "mA",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 5-4": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    },
+    "Micro-Quantity-Injection Final Learning Value 5-3": {
+      "unit": "ms",
+      "normal_min": null,
+      "normal_max": null,
+      "warn_min": null,
+      "warn_max": null
+    }
+  },
+  "switches": {
+    "Clear Memory Terminal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Delivery Mode (Test Mode) Connector": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "D-Check Require Flag": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Read Memory Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Test Mode Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AT Vehicle ID": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Air Conditioning Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Power Steering Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Ignition Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Intercooler Auto Washer Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Idle Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Neutral Position Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Electrical Load Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Knocking Signal #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Knocking Signal #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Front O2 Sensor #2 Rich Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Rear O2 Sensor Rich Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Front O2 Sensor #1 Rich Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Starter Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Handle Switch": {
+      "states": "High Input\\\\Low Input",
+      "expected_state": null
+    },
+    "Air Conditioning Mid Pressure Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Air Conditioning Lock Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Wiper Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Light Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Blower Fan Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Rear Defogger Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Camshaft Position Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Crankshaft Position Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Blow-By Leak Connector": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Canister Purge Control (CPC) Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Intercooler Auto Washer Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Fuel Pump Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Radiator Fan Relay #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Radiator Fan Relay #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Radiator Fan Relay #3": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Air Conditioning Compressor Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Assist Air Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Power Steering Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Ventilation Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Pressure Sources Change": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Variable Intake Air Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Tumble Generator Valve (TGV) Drive": {
+      "states": "Close/Open",
+      "expected_state": null
+    },
+    "Tumble Generator Valve (TGV) Output": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Positive Crankcase Ventilation (PCV) Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Muffler Control": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Intake Air Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Exhaust Gas Negative Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Exhaust Gas Positive Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Traction Control System (TCS) Relief Valve Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Relief Valve Solenoid #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Relief Valve Solenoid #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Tank Sensor Control Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Request Torque Down VDC": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Ban of Torque Down": {
+      "states": "On\\\\Off",
+      "expected_state": null
+    },
+    "Fuel Cut Signal From AT": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Retard Signal From AT": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Canister Purge Control (CPC) Solenoid Valve #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Engine Oil Pressure Switch #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Engine Oil Pressure Switch #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Exhaust By-Pass Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AT Engine Torque Request (AET) Signal": {
+      "states": "High\\\\Low",
+      "expected_state": null
+    },
+    "AT Cooperation Rich Spike Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AT Cooperation Lean Burn Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AT Cooperation Lock Up Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Engine AT Masking Flag (EAM) Signal": {
+      "states": "High\\\\Low",
+      "expected_state": null
+    },
+    "Torque Permission Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Torque Control Signal #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Torque Control Signal #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Front Wheel Drive (FWD) Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Kick Down Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Upshift Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Stop Light Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Downshift Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "ABS Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Cruise Control Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Tiptronic Mode Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "N/P Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "R Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "D Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "3rd Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "2nd Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "1st Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Hold Mode Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Power Mode Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Solenoid #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Solenoid #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Low Clutch Timing Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "2-4 Brake Timing Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Tiptronic Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "4th Range Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Lock Solenoid": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "ATF Temperature Lamp": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Rear Differential Oil Temperature Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Diagnosis Lamp": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Output 1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Output 2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Output 3": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Shift Output 4": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "N Range": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Hold Lamp": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Traction Control System (TCS) Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "P/N Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Torque Control Cut Signal": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "P Range": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Power Mode Lamp": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Economy Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AT Power Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Back Lamp Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Inhibitor Switch #3 Monitor": {
+      "states": "Low/High",
+      "expected_state": null
+    },
+    "Inhibitor Switch #4": {
+      "states": "Low/High",
+      "expected_state": null
+    },
+    "Inhibitor Switch #3": {
+      "states": "Low/High",
+      "expected_state": null
+    },
+    "Inhibitor Switch #2": {
+      "states": "Low/High",
+      "expected_state": null
+    },
+    "Inhibitor Switch #1": {
+      "states": "Low/High",
+      "expected_state": null
+    },
+    "Judgement of All Wheel Drive (AWD)": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Signal of Identified Electronic Control Module (ECM)": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "LC/B Fluid Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "I/C Fluid Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "F/B Fluid Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "D/C Fluid Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "H&LR/C Fluid Pressure": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Injector Driver Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Electronic Throttle Control (ETC) Motor Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Cruise Control Status": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Main (Cruise) Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Inhibitor Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Brake Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Resume/Accelerate Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Set/Coast Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Clutch Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Lamp 6": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Lamp 5": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Lamp 4": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Lamp 3": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Lamp 2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Lamp 1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "LU&FWD/B Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "LC/B Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Automatic Transmission Learning Process": {
+      "states": "Not Completed/Completed",
+      "expected_state": null
+    },
+    "Fwd/B Hydraulic Pressure Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AUTO Mode Lamp": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "AUTO/MANUAL Mode Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Center Differential Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Parking Position Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Cruise Control Cancel Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Distance Change Switch": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Secondary Air Combi Valve Relay #1": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Secondary Air Pump Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Secondary Air Combi Valve Relay #2": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Body Integrated Unit Count": {
+      "states": "On\\\\Off",
+      "expected_state": null
+    },
+    "Body Integrated Unit Data": {
+      "states": "On\\\\Off",
+      "expected_state": null
+    },
+    "Oil Level Switch": {
+      "states": "Low Level/High Level",
+      "expected_state": null
+    },
+    "Fuel Pressure Switching Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Malfunction Indicator Light (MIL) ON Flag": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Injector Learning": {
+      "states": "Not Completed/Completed",
+      "expected_state": null
+    },
+    "Fuel Pump Learning": {
+      "states": "Not Completed/Completed",
+      "expected_state": null
+    },
+    "Request for ''Compressor ON''": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Sub Fuel Pump Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Swirl Control Valve": {
+      "states": "Open\\\\Close",
+      "expected_state": null
+    },
+    "Glow Relay": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Exhaust Gas Recirculation (EGR) Control Mode": {
+      "states": "Open/Feedback",
+      "expected_state": null
+    },
+    "Boost Pressure Control Mode": {
+      "states": "Open/Feedback",
+      "expected_state": null
+    },
+    "Lock-Up ON/OFF Solenoid Valve": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Self-Shut Relay Output": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Diesel Particulate Filter (DPF) Regeneration": {
+      "states": "Not In Progress/In Progress",
+      "expected_state": null
+    },
+    "Clutch Switch for Smart-System": {
+      "states": "Off/On",
+      "expected_state": null
+    },
+    "Fuel Pump Mode": {
+      "states": "Open/Feedback",
+      "expected_state": null
+    },
+    "Fuel Cut": {
+      "states": "Not Requested/Requested",
+      "expected_state": null
+    },
+    "Exhaust Gas Recirculation (EGR) Learning": {
+      "states": "Not Completed/Completed",
+      "expected_state": null
+    }
+  }
+}

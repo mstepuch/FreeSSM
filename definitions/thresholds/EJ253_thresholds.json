@@ -1,0 +1,184 @@
+{
+  "_format": "FreeSSM Absolute Threshold Alerts v1",
+  "_instructions": "warn triggers yellow highlight, critical triggers red. null = no threshold in that direction.",
+  "engine": "EJ253 2.5L SOHC NA",
+  "vehicle": "Subaru Outback III (BP9) 2006 AT, EURO4",
+  "thresholds": {
+    "Engine Speed": {
+      "unit": "rpm",
+      "warn_min": null,
+      "warn_max": 6500,
+      "critical_min": null,
+      "critical_max": 6800,
+      "_note": "Fuel cut at ~6500. Above 6800 = overrev risk (wrong gear)"
+    },
+    "Coolant Temperature": {
+      "unit": "C",
+      "warn_min": null,
+      "warn_max": 105,
+      "critical_min": null,
+      "critical_max": 115,
+      "_note": "Fans on at 95C. Red warning lamp at ~115C"
+    },
+    "Engine Load": {
+      "unit": "%",
+      "warn_min": null,
+      "warn_max": 110,
+      "critical_min": null,
+      "critical_max": 120,
+      "_note": "NA engine cannot exceed 100%. >110% = MAF fault or intake leak"
+    },
+    "Ignition Timing": {
+      "unit": "deg",
+      "warn_min": -20,
+      "warn_max": 55,
+      "critical_min": -30,
+      "critical_max": 60,
+      "_note": "Retard at decel/idle, advance at light load"
+    },
+    "Knocking Correction": {
+      "unit": "deg",
+      "warn_min": -2.8,
+      "warn_max": null,
+      "critical_min": -5.0,
+      "critical_max": null,
+      "_note": "FBKC. Single -1.4 OK. -2.8 consistent = warning. -5.0 = bearing damage risk"
+    },
+    "Learned Ignition Timing": {
+      "unit": "deg",
+      "warn_min": -2.8,
+      "warn_max": null,
+      "critical_min": -5.0,
+      "critical_max": null,
+      "_note": "Fine Knock Learning. Chronic -2.8 = octane or hardware problem"
+    },
+    "Battery Voltage": {
+      "unit": "V",
+      "warn_min": 12.0,
+      "warn_max": 15.0,
+      "critical_min": 11.0,
+      "critical_max": 16.0,
+      "_note": "<12V = alternator failure. >15V = regulator fault, ECU burn risk"
+    },
+    "Intake Air Temperature": {
+      "unit": "C",
+      "warn_min": -35,
+      "warn_max": 65,
+      "critical_min": -40,
+      "critical_max": 80,
+      "_note": "-40 = open circuit sensor. >80 on NA = shorted sensor"
+    },
+    "Vehicle Speed": {
+      "unit": "km/h",
+      "warn_min": null,
+      "warn_max": 200,
+      "critical_min": null,
+      "critical_max": 220,
+      "_note": "ECU limiter at ~200-210. >220 = VSS sensor fault"
+    },
+    "Manifold Absolute Pressure": {
+      "unit": "kPa",
+      "warn_min": 10,
+      "warn_max": 102,
+      "critical_min": 5,
+      "critical_max": 105,
+      "_note": "NA: no boost. Hard decel ~15-20 kPa. <5 or >105 = MAP sensor fault"
+    },
+    "Mass Air Flow": {
+      "unit": "g/s",
+      "warn_min": null,
+      "warn_max": 150,
+      "critical_min": null,
+      "critical_max": 170,
+      "_note": "EJ253 max WOT approx 130-140 g/s. >170 without turbo = MAF fault"
+    },
+    "Atmosphere Pressure": {
+      "unit": "kPa",
+      "warn_min": 60,
+      "warn_max": 105,
+      "critical_min": 50,
+      "critical_max": 110,
+      "_note": "Sea level ~101 kPa, mountains 70-80 kPa. Extremes = baro sensor fault"
+    },
+    "Air/Fuel Correction #1": {
+      "unit": "%",
+      "warn_min": -15,
+      "warn_max": 15,
+      "critical_min": -25,
+      "critical_max": 25,
+      "_note": "STFT bank 1. Transient spikes to 15% OK. ECU sets DTC near +/-25%"
+    },
+    "Air/Fuel Learning #1": {
+      "unit": "%",
+      "warn_min": -10,
+      "warn_max": 10,
+      "critical_min": -15,
+      "critical_max": 15,
+      "_note": "LTFT bank 1. >10% from zero = chronic problem (vacuum leak, MAF, injector)"
+    },
+    "Air/Fuel Sensor #1 Lambda": {
+      "unit": "",
+      "warn_min": 0.7,
+      "warn_max": null,
+      "critical_min": 0.65,
+      "critical_max": null,
+      "_note": "Wideband. <0.70 at WOT = oil film washdown risk. No upper limit (decel fuel cut)"
+    },
+    "Rear O2 Sensor Voltage": {
+      "unit": "V",
+      "warn_min": null,
+      "warn_max": 1.1,
+      "critical_min": null,
+      "critical_max": 1.2,
+      "_note": "Narrowband post-cat. Normal 0.1-0.9V. >1.1V = short to positive"
+    },
+    "Front O2 Sensor #1 Heater Current": {
+      "unit": "A",
+      "warn_min": 0.5,
+      "warn_max": 5.0,
+      "critical_min": 0.1,
+      "critical_max": 8.0,
+      "_note": "Normal 1-3A. <0.1A = heater burned. Very high = electrical fault"
+    },
+    "Rear O2 Sensor Heater Current": {
+      "unit": "A",
+      "warn_min": 0.5,
+      "warn_max": 3.0,
+      "critical_min": 0.1,
+      "critical_max": 5.0,
+      "_note": "Rear heater smaller, normal 1-2A"
+    },
+    "Fuel Injection #1 Pulse": {
+      "unit": "ms",
+      "warn_min": null,
+      "warn_max": 20,
+      "critical_min": null,
+      "critical_max": 25,
+      "_note": "At 6000 RPM cycle = 20ms. >20ms = injector at 100% duty, lean risk at high RPM"
+    },
+    "Fuel Injection #2 Pulse": {
+      "unit": "ms",
+      "warn_min": null,
+      "warn_max": 20,
+      "critical_min": null,
+      "critical_max": 25,
+      "_note": "Same as #1"
+    },
+    "Fuel Tank Pressure": {
+      "unit": "kPa",
+      "warn_min": -4.0,
+      "warn_max": 4.0,
+      "critical_min": -6.6,
+      "critical_max": 6.6,
+      "_note": "EVAP system. FSM specifies sensor limits at +/-6.67 kPa"
+    },
+    "Oil Temperature": {
+      "unit": "C",
+      "warn_min": null,
+      "warn_max": 115,
+      "critical_min": null,
+      "critical_max": 125,
+      "_note": "Normal 95-105C. >115C = lubrication breakdown. EJ has no oil cooler"
+    }
+  }
+}
