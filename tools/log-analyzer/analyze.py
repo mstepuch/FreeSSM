@@ -278,6 +278,25 @@ COLD_START_ECT = 40.0
 WARMUP_ECT = 70.0
 
 
+def _detect_tps_idle_floor(tps: list[float | None], ect: list[float | None]) -> float:
+    """Find the closed-throttle TPS floor for this log.
+
+    Subaru DBW commonly reports 2-3 % at fully released pedal (mechanical
+    offset of the throttle blade and sensor zero). A hard-coded TPS<5 %
+    threshold for IDLE admits part-throttle samples and contaminates idle
+    statistics. Instead use the bottom-percentile of warm TPS readings.
+    Returns the effective idle ceiling (floor + 0.5 pp tolerance).
+    """
+    warm_tps = [t for t, e in zip(tps, ect)
+                if t is not None and e is not None and e > 60 and t > 0.05]
+    if len(warm_tps) < 30:
+        return 5.0  # fallback: legacy threshold
+    warm_sorted = sorted(warm_tps)
+    floor = warm_sorted[len(warm_sorted) // 20]  # 5th percentile
+    # Cap at 5 to avoid runaway if log has no genuine idle.
+    return min(floor + 0.5, 5.0)
+
+
 def classify_phases(log: ParsedLog) -> list[str]:
     """Per-row phase. Then a smoothing pass merges sub-second flicker."""
     rpm = log.col("rpm") or [None] * log.rows
@@ -289,6 +308,10 @@ def classify_phases(log: ParsedLog) -> list[str]:
     # Idle Switch is a definitive marker: ECU itself decided "throttle plate
     # is at mechanical idle stop". Trust it over geometry when available.
     idle_sw = log.bool_col("idle_switch") or [None] * log.rows
+
+    # Closed-throttle TPS ceiling, computed per-log (DBW offset varies).
+    tps_idle_max = _detect_tps_idle_floor(tps, ect)
+    log.tps_idle_max = tps_idle_max  # for downstream checks
 
     raw: list[str] = []
     prev_load = None
@@ -337,10 +360,11 @@ def classify_phases(log: ParsedLog) -> list[str]:
         # Idle. Two equivalent triggers:
         #   (a) Idle Switch ON + vehicle stationary => definitive idle.
         #   (b) Geometry fallback when switch column absent / wrong.
+        # TPS ceiling is dynamic: closed-throttle floor + 0.5 pp.
         is_idle_sw = (isw is True and (v is None or v < 3) and r < 1000
-                      and l < 30 and (t is None or t < 8))
+                      and l < 30 and (t is None or t <= tps_idle_max + 1.0))
         is_idle_geom = (r < 950 and l < 22 and (v is None or v < 3)
-                        and (t is None or t < 5))
+                        and (t is None or t <= tps_idle_max))
         if is_idle_sw or is_idle_geom:
             raw.append(PHASE_IDLE)
             prev_load = l
@@ -388,7 +412,11 @@ def _smooth_phases(phases: list[str], times: list[float], min_duration_s: float)
         #   absorbed sample contaminates downstream lambda/STFT statistics.
         if (run_dur < min_duration_s and i > 0
                 and out[i] not in (PHASE_COLD_START, PHASE_WARMUP, PHASE_OFF,
-                                   PHASE_UNKNOWN, PHASE_OVERRUN_DFCO)):
+                                   PHASE_UNKNOWN, PHASE_OVERRUN_DFCO)
+                # Don't absorb foreign short runs INTO idle: a 1-sample
+                # tip-in or transition next to an idle stretch is a real
+                # departure and absorbing it contaminates idle stats.
+                and out[i - 1] != PHASE_IDLE):
             replacement = out[i - 1]
             for k in range(i, j + 1):
                 out[k] = replacement
@@ -480,10 +508,41 @@ def rpm_load_map(log: ParsedLog, sensor_key: str,
                 "n": len(v)} for k, v in grid.items() if len(v) >= 3}
 
 
-def fuel_trim_drift(log: ParsedLog) -> dict[str, dict]:
+def detect_placeholder_channels(log: ParsedLog) -> list[str]:
+    """Identify channels that the ECU does not actually report in this
+    calibration but the CSV still emits as a constant filler.
+
+    Subaru SSM2 protocol exposes B1/B2/B3/B4 fuel-trim slots, but a given
+    ECU only fills the slots it has hardware for. EJ253 NA (single pre-cat
+    O2 sensor downstream of the merge collector) cannot report per-bank
+    trims — slots beyond B1 are emitted as a constant.
+    """
+    placeholders: list[str] = []
+    for k in ("ltft_b3", "stft_b3"):
+        v = log.col(k)
+        if v is None:
+            continue
+        clean = [x for x in v if x is not None]
+        if len(clean) < 20:
+            continue
+        unique = set(round(x, 2) for x in clean)
+        rng = max(clean) - min(clean)
+        # LTFT B3: hard zero -> definitive placeholder.
+        # STFT B3: tight (range < 6 pp) -> not a real bank reading.
+        if k == "ltft_b3" and rng < 0.5 and len(unique) <= 2:
+            placeholders.append(k)
+        elif k == "stft_b3" and rng < 6.0 and abs(statistics.fmean(clean)) < 1.0:
+            placeholders.append(k)
+    return placeholders
+
+
+def fuel_trim_drift(log: ParsedLog, placeholders: list[str] | None = None) -> dict[str, dict]:
     """Compare fuel trim mean over first 20% vs last 20% of the log."""
+    skip = set(placeholders or [])
     out: dict[str, dict] = {}
     for k in ("ltft_b1", "ltft_b3", "stft_b1", "stft_b3"):
+        if k in skip:
+            continue
         v = log.col(k)
         if v is None:
             continue
@@ -525,7 +584,9 @@ def boolean_summary(log: ParsedLog) -> dict[str, dict]:
 # Section 5 — Event detection (DFCO-aware)
 # ============================================================================
 
-def detect_events(log: ParsedLog, phases: list[str]) -> list[dict]:
+def detect_events(log: ParsedLog, phases: list[str],
+                  placeholders: list[str] | None = None) -> list[dict]:
+    skip_keys = set(placeholders or [])
     events: list[dict] = []
 
     def append_runs(name: str, mask: list[bool], min_run: int,
@@ -560,6 +621,8 @@ def detect_events(log: ParsedLog, phases: list[str]) -> list[dict]:
     # LTFT outside warn band — meaningful only in warm closed-loop phases
     cl_phases = (PHASE_IDLE, PHASE_CRUISE, PHASE_PART_LOAD)
     for k in ("ltft_b1", "ltft_b3"):
+        if k in skip_keys:
+            continue
         v = log.col(k)
         if v:
             mask = [(v[i] is not None and abs(v[i]) > 10.0 and phases[i] in cl_phases)
@@ -568,6 +631,8 @@ def detect_events(log: ParsedLog, phases: list[str]) -> list[dict]:
 
     # STFT volatility — exclude transitions and DFCO (where swing is normal)
     for k in ("stft_b1", "stft_b3"):
+        if k in skip_keys:
+            continue
         v = log.col(k)
         if v:
             mask = [(v[i] is not None and abs(v[i]) > 15.0
@@ -733,33 +798,69 @@ def chk_cruise_ltft_static(ctx: CheckCtx) -> Finding:
 
 
 def chk_ltft_load_dependency(ctx: CheckCtx) -> Finding:
-    """If LTFT moves strongly with load -> vacuum-leak signature (rich at idle, neutral at load)."""
+    """3-pillar vacuum-leak fingerprint.
+
+    A real intake / PCV / brake-booster vacuum leak shows ALL of:
+        (P1) LTFT at warm idle is positive and large (> +5 %): ECU is
+             adding fuel because the leak introduces unmetered air.
+        (P2) MAP at warm idle is elevated above the engine's signature
+             vacuum (> 40 kPa abs for a healthy NA EJ at sea level;
+             healthy idle is 27-35 kPa abs).
+        (P3) Gradient: LTFT idle is at least +5 pp MORE positive than
+             LTFT cruise. The leak is a fixed mass of unmetered air; at
+             idle it dominates the airflow, at cruise it is negligible.
+
+    All three required to flag warn. One pillar alone is NOT a vacuum
+    leak (negative LTFT idle, low MAP, or negative gradient each rule
+    it out individually).
+    """
     idle_v = _phase_median(ctx, PHASE_IDLE, "ltft_b1")
     cruise_v = _phase_median(ctx, PHASE_CRUISE, "ltft_b1")
+    map_idle = _phase_median(ctx, PHASE_IDLE, "map")
     if idle_v is None or cruise_v is None:
-        return Finding("ltft_load_dependency", "LTFT load dependency",
+        return Finding("ltft_load_dependency", "Vacuum leak fingerprint",
                        "skipped", None,
                        "Need both IDLE and CRUISE LTFT medians.")
-    delta = cruise_v - idle_v
-    if abs(delta) < 5:
-        sev = "pass"
-        msg = f"LTFT IDLE vs CRUISE delta = {delta:+.1f}% — flat. No clear load dependency."
-    elif delta > 5:
-        sev = "warn"
-        msg = (f"LTFT rises with load (idle {idle_v:+.1f}% -> cruise {cruise_v:+.1f}%, "
-               f"delta {delta:+.1f}%). Two main signatures match this shape: "
-               "(1) idle is too rich (leaking injector / FPR / -- on LPG -- LPG injector seepage), "
-               "so ECU subtracts at idle and the trim relaxes back near zero under load; "
-               "(2) load-side enleanment from a clogged secondary fuel path / dirty injector at higher demand.")
+    delta = idle_v - cruise_v  # positive => idle MORE positive than cruise
+
+    p1 = idle_v > 5.0
+    p2 = (map_idle is not None and map_idle > 40.0)
+    p3 = delta > 5.0
+
+    pillars = []
+    if p1: pillars.append(f"P1 LTFT idle {idle_v:+.1f}% > +5%")
+    else:  pillars.append(f"P1 LTFT idle {idle_v:+.1f}% (need > +5)")
+    if map_idle is None:
+        pillars.append("P2 MAP idle: not logged (skipped)")
+    elif p2:
+        pillars.append(f"P2 MAP idle {map_idle:.1f} kPa > 40")
     else:
+        pillars.append(f"P2 MAP idle {map_idle:.1f} kPa (healthy <= 35)")
+    if p3: pillars.append(f"P3 gradient idle-cruise {delta:+.1f} pp > +5")
+    else:  pillars.append(f"P3 gradient idle-cruise {delta:+.1f} pp (need > +5)")
+
+    pillar_count = sum([p1, p2 if map_idle is not None else False, p3])
+
+    if p1 and p3 and (p2 or map_idle is None):
         sev = "warn"
-        msg = (f"LTFT falls with load (idle {idle_v:+.1f}% -> cruise {cruise_v:+.1f}%, "
-               f"delta {delta:+.1f}%). Classic vacuum-leak signature on petrol: "
-               "leak air dominates at idle -> ECU adds fuel (idle LTFT high), then leak becomes "
-               "negligible at load (LTFT relaxes). On LPG, can also indicate the LPG load map "
-               "being too rich while idle is correct.")
-    return Finding("ltft_load_dependency", "LTFT load dependency", sev, delta, msg,
-                   evidence={"idle_median": idle_v, "cruise_median": cruise_v})
+        msg = ("Vacuum-leak fingerprint POSITIVE: " + "; ".join(pillars) + ". "
+               "Inspect intake manifold gasket, PCV (positive crankcase "
+               "ventilation) hoses, brake booster hose, FPR (fuel pressure "
+               "regulator) vacuum line. Smoke test of intake recommended.")
+    elif pillar_count == 0:
+        sev = "pass"
+        msg = ("Vacuum leak NOT supported by data: " + "; ".join(pillars) + ". "
+               "All three independent fingerprints are negative.")
+    else:
+        sev = "info"
+        msg = ("Vacuum leak inconclusive (" + str(pillar_count) + "/3 pillars): "
+               + "; ".join(pillars) + ". "
+               "Insufficient signature for a leak; if symptoms persist, smoke "
+               "test the intake but treat low-priority.")
+    return Finding("ltft_load_dependency", "Vacuum leak fingerprint",
+                   sev, delta, msg,
+                   evidence={"ltft_idle": idle_v, "ltft_cruise": cruise_v,
+                             "map_idle": map_idle, "pillars": pillar_count})
 
 
 def chk_stft_volatility(ctx: CheckCtx) -> Finding:
@@ -886,21 +987,72 @@ def chk_dfco_present(ctx: CheckCtx) -> Finding:
 
 
 def chk_idle_rpm_stability(ctx: CheckCtx) -> Finding:
-    p = ctx.summary["per_phase"].get(PHASE_IDLE)
-    if not p or "rpm" not in p:
+    """True-idle RPM stability.
+
+    Re-derives the sample set from raw log columns (warm + closed throttle
+    + low RPM + stationary), so it is immune to phase-classifier flicker
+    (smoothing absorbing 1-sample tip-ins back into IDLE).
+    """
+    rpm = ctx.log.col("rpm")
+    tps = ctx.log.col("tps")
+    ect = ctx.log.col("ect")
+    vss = ctx.log.col("vss")
+    if rpm is None or tps is None or ect is None:
         return Finding("idle_rpm_stability", "Idle RPM stability",
-                       "skipped", None, "No IDLE samples.")
-    std = p["rpm"]["std"]
+                       "skipped", None, "Need RPM, TPS, ECT.")
+    # Closed-throttle ceiling (computed during phase classification).
+    tps_max = getattr(ctx.log, "tps_idle_max", 2.7)
+    # Two-pass filter:
+    #   pass 1: per-sample idle eligibility (warm + closed throttle + stationary
+    #           + stabilized RPM band 550-850, the EJ253 NA target zone)
+    #   pass 2: keep only samples that belong to a continuous run >= 3 s.
+    #           Excludes coast-down through idle (RPM bleed under closed
+    #           throttle after tip-out, AC kick-in spikes, etc.)
+    eligible: list[bool] = []
+    for i in range(ctx.log.rows):
+        r, t, e = rpm[i], tps[i], ect[i]
+        v = vss[i] if vss is not None else None
+        ok = (r is not None and t is not None and e is not None
+              and e > 75 and t <= tps_max
+              and 550 <= r <= 850
+              and (v is None or v <= 3))
+        eligible.append(ok)
+    times = ctx.log.time
+    pure_idle: list[float] = []
+    i = 0
+    while i < ctx.log.rows:
+        if not eligible[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < ctx.log.rows and eligible[j + 1]:
+            j += 1
+        if (times[j] - times[i]) >= 3.0:
+            for k in range(i, j + 1):
+                pure_idle.append(rpm[k])
+        i = j + 1
+    if len(pure_idle) < 30:
+        return Finding("idle_rpm_stability", "Idle RPM stability",
+                       "skipped", None,
+                       f"Only {len(pure_idle)} stabilized-idle samples (need 30+; "
+                       f"closed-throttle ceiling = {tps_max:.2f}%, RPM band 550-850, "
+                       f"continuous-run >= 3 s).")
+    std = statistics.pstdev(pure_idle)
+    median = statistics.median(pure_idle)
     sev = _band(std, 0, 25, 0, 60)
-    msg = f"Idle RPM std = {std:.1f} rpm. "
+    msg = (f"Idle RPM std = {std:.1f} rpm (median {median:.0f}, n={len(pure_idle)} "
+           f"true-idle samples; TPS-floor={tps_max:.2f}%). ")
     if sev == "pass":
         msg += "Idle is stable."
     elif sev == "warn":
-        msg += "Idle is rough. Possible: dirty IACV / throttle plate, ignition coil/plug, vacuum leak, LPG injector wear (clatter)."
+        msg += ("Idle is rough. Possible: dirty IACV / throttle plate, "
+                "ignition coil/plug, vacuum leak, LPG injector wear.")
     else:
-        msg += "Idle is hunting. Same root causes; severity is high — diagnose before next drive."
+        msg += ("Idle is hunting. Same root causes; severity is high — "
+                "diagnose before next drive.")
     return Finding("idle_rpm_stability", "Idle RPM stability", sev, std, msg,
-                   evidence={"samples": p["samples"]})
+                   evidence={"samples": len(pure_idle), "median": median,
+                             "tps_floor": tps_max})
 
 
 # ---------- Tier 1 (extra): WOT fuel delivery (lean + STFT-pegged signature) ----------
@@ -965,14 +1117,16 @@ def chk_maf_idle_value(ctx: CheckCtx) -> Finding:
         return Finding("maf_idle_value", "MAF at warm idle",
                        "skipped", None, "No warm idle samples.")
     val = p["maf_gs"]["median"]
-    # EJ253 (2.5 L NA) at warm idle ~700 rpm: expect 2.5-3.5 g/s.
-    sev = _band(val, 2.5, 3.6, 2.0, 4.5)
+    # EJ253 (2.5 L NA) at warm idle ~700 rpm: 2.5-4.0 g/s typical, up to 4.5
+    # with AC compressor + alternator load. Above 4.5 starts to be suspect.
+    sev = _band(val, 2.5, 4.5, 2.0, 5.5)
     msg = f"MAF median {val:.2f} g/s at warm idle (~700 rpm). "
     if sev == "pass":
-        msg += "Within expected band for EJ253 at idle."
-    elif val > 3.6:
-        msg += ("Higher than expected. Possible: vacuum leak (intake / brake booster / FPR / PCV), "
-                "high idle, MAF over-reading after replacement.")
+        msg += "Within expected band for EJ253 at idle (incl. AC/alternator load)."
+    elif val > 4.5:
+        msg += ("Higher than expected. Cross-check with vacuum-leak fingerprint; "
+                "if that is negative, suspect elevated idle RPM target (AC always "
+                "engaged?) or MAF over-reading after replacement.")
     else:
         msg += ("Lower than expected. Possible: dirty MAF (under-reading), partial intake restriction, "
                 "intake leak after the MAF (false air bypassing the meter).")
@@ -992,12 +1146,17 @@ def chk_map_rel_idle(ctx: CheckCtx) -> Finding:
                        "skipped", None, "No warm idle samples.")
     if "map" in p:
         val = p["map"]["median"]
-        sev = _band(val, 22, 30, 18, 40)
+        # EJ253 NA at warm idle, sea level: 27-35 kPa abs is healthy.
+        # Warn 22-40, alarm beyond. Above 40 = candidate vacuum leak
+        # (cross-check with chk_ltft_load_dependency fingerprint).
+        sev = _band(val, 27, 37, 22, 42)
         msg = f"MAP {val:.1f} kPa abs at warm idle. "
         if sev == "pass":
-            msg += "Healthy manifold vacuum (~ -75 kPa rel)."
-        elif val > 30:
-            msg += "Weak manifold vacuum. Suspect vacuum leak, sticking throttle plate, late ignition, or major valve issue."
+            msg += "Healthy manifold vacuum for EJ253 NA at sea level."
+        elif val > 37:
+            msg += ("Slightly weak manifold vacuum. Cross-check the vacuum-leak "
+                   "fingerprint check; if that passes, treat as benign (e.g. "
+                   "AC engaged, slight altitude, or PCV flow).")
         else:
             msg += "Unusually high vacuum at idle. Possibly partial intake restriction (filter / TB plate)."
         return Finding("vacuum_at_idle", "Manifold vacuum at idle", sev, val, msg,
@@ -1553,6 +1712,7 @@ def run_checks(log: ParsedLog, phases: list[str], summary: dict[str, Any],
 
 def summarize(log: ParsedLog, fuel_type: str) -> dict[str, Any]:
     phases = classify_phases(log)
+    placeholders = detect_placeholder_channels(log)
     summary: dict[str, Any] = {
         "file": log.path,
         "fuel_type": fuel_type,
@@ -1561,6 +1721,7 @@ def summarize(log: ParsedLog, fuel_type: str) -> dict[str, Any]:
         "samples": log.rows,
         "sample_rate_hz": round(log.rows / log.duration_s, 2) if log.duration_s > 0 else 0,
         "missing_key_sensors": [k for k, v in log.key_idx.items() if v is None],
+        "placeholder_channels": placeholders,
         "phase_distribution": dict(Counter(phases)),
         "per_phase": per_phase_stats(log, phases),
         "rpm_load_map": {
@@ -1570,8 +1731,8 @@ def summarize(log: ParsedLog, fuel_type: str) -> dict[str, Any]:
             "knock":   rpm_load_map(log, "knock"),
             "maf_gs":  rpm_load_map(log, "maf_gs"),
         },
-        "fuel_trim_drift": fuel_trim_drift(log),
-        "events": detect_events(log, phases),
+        "fuel_trim_drift": fuel_trim_drift(log, placeholders),
+        "events": detect_events(log, phases, placeholders),
         "boolean_switches": boolean_summary(log),
     }
     findings = run_checks(log, phases, summary, fuel_type)

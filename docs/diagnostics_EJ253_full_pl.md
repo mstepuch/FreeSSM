@@ -6,6 +6,51 @@
 
 ---
 
+## ⚠️ SPROSTOWANIE (data: 27 kwietnia 2026)
+
+Po dyskusji z Michałem i ponownej analizie z poprawionym narzędziem (analizator v3, bump v1.3.0-ms.10), wycofuję trzy stwierdzenia z tego dokumentu:
+
+### 1. **Bank 2 nie istnieje fizycznie w EJ253 NA**
+Protokół SSM2 ma sloty B1/B2/B3/B4, ale **bank** to konstrukt ECU, nie geometryczny — istnieje tam, gdzie ECU ma dla niego osobną szerokopasmową sondę przedkatową i osobną pętlę regulacji. EJ253 NA ma **jedną zbiorczą sondę przedkatową** za Y-pipe i **jedną pętlę**. Z perspektywy regulacji to **jeden bank**. Sloty B2/B3/B4 w protokole są niewykorzystane.
+Kanał LTFT B3 w Twoim logu to **placeholder** (stałe 0); STFT B3 to mikro-trim ±2.5 % o innej naturze. Analizator v3 wykrywa to automatycznie (`placeholder_channels`) i pomija w punktacji.
+
+### 2. **Vacuum leak NIE występuje**
+Poprzedni alarm opierał się na pojedynczym wskaźniku (LTFT idle nieco ujemny + MAP 33 kPa zinterpretowane jako „za wysokie"). To była luka analizatora.
+Prawidłowy fingerprint nieszczelności wymaga **trzech niezależnych pillarów**:
+
+| Pillar | Co byłoby przy wycieku | Co masz | Werdykt |
+|---|---|---|---|
+| P1: LTFT idle dodatni > +5 % | tak | **−6.3 %** (ujemny!) | ❌ |
+| P2: MAP idle > 40 kPa abs | tak | **33.0 kPa** (zdrowy 27–35) | ❌ |
+| P3: gradient idle−cruise > +5 pp | tak | **−6.3 pp** (odwrotny!) | ❌ |
+
+Trzy z trzech pillarów **negatywne**, w tym jeden **odwrotny**. Wycofuję wątek wycieku w całości. Wykluczyłem go też z listy podejrzanych w problemie WOT.
+
+### 3. **„Idle hunting std=367" to artefakt klasyfikatora**
+Mój klasyfikator faz wpuszczał do worka „IDLE" próbki gdy faktycznie naciskałeś gaz (TPS do 46.7 %, RPM do 4232). Po prawidłowej filtracji do **stabilizowanego idle** (TPS przy podłodze closed-throttle, RPM 550–850, ECT > 75 °C, ciągłe okna ≥ 3 s):
+
+- mediana RPM = **653** (cel ~700 dla EJ253)
+- std RPM = **37** (warn-band: lekkie wahania, prawdopodobnie AC + alternator load steps; nie hunting)
+- n = 230 stabilizowanych próbek
+
+Silnik nie pulsuje dramatycznie. Lekkie szorstkie wahania ±37 RPM mieszczą się w granicach normalności dla 200k-km EJ253. Wycofuję narrację o adaptacji DBW po Clear Memory jako przyczynie — nic nie wymaga „adaptacji", bo nic się nie pulsuje.
+
+### Co **pozostaje definitywnie potwierdzone**
+
+| Fakt | Dowód |
+|---|---|
+| **Pod WOT na benzynie mieszanka uboga** | Lambda 1.02 (cel 0.85–0.92), STFT p95 +24 %, std 10.9 %, mean +9.4 % |
+| **Pod WOT na LPG silnik zdrowy** | Lambda 0.99, STFT p95 +2.3 %, std 1.7 % |
+| **Sonda przedkatowa B1 sprawna** | Ri ≈ 31 Ω — w idealnym zakresie roboczym dla LSU 4.9 |
+| **Knock correction ≈ 0** | Brak ujemnych odejść w obu logach |
+| **Idle ciepły zdrowy z lekką szorstkością** | mediana 653 RPM, std 37 RPM |
+
+**Jedyny realny problem: dostarczanie benzyny pod dużym zapotrzebowaniem masowym** (WOT/wysokie obciążenie). Manometr w listwie paliwowej pod WOT to najtańsza i pierwsza weryfikacja. Szczegóły w rozdziale „Co zostaje jako problem" poniżej.
+
+Dalsza część dokumentu (przed sprostowaniem) zawiera materiał edukacyjny o anatomii sondy lambda, układzie dolotowym i układzie paliwowym — pozostawiony bez zmian, bo wartość edukacyjna jest niezależna od mojej błędnej interpretacji konkretnych liczb.
+
+---
+
 ## Słowniczek — co oznaczają skróty i pojęcia
 
 | Skrót / pojęcie | Pełna nazwa polska | Co to jest |
