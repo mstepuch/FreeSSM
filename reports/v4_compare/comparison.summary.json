@@ -1,0 +1,161 @@
+{
+  "rows": [
+    {
+      "metric": "Idle LTFT (median)",
+      "petrol": -6.3,
+      "lpg": -6.3,
+      "delta": 0.0,
+      "unit": "%"
+    },
+    {
+      "metric": "Idle STFT (mean)",
+      "petrol": -3.03,
+      "lpg": 0.18,
+      "delta": -3.21,
+      "unit": "%"
+    },
+    {
+      "metric": "Cruise LTFT (median)",
+      "petrol": 0.0,
+      "lpg": -3.9,
+      "delta": 3.9,
+      "unit": "%"
+    },
+    {
+      "metric": "Cruise STFT std",
+      "petrol": 3.01,
+      "lpg": 4.98,
+      "delta": -1.9700000000000006,
+      "unit": "%"
+    },
+    {
+      "metric": "WOT lambda (median)",
+      "petrol": 1.02,
+      "lpg": 0.99,
+      "delta": 0.030000000000000027,
+      "unit": ""
+    },
+    {
+      "metric": "WOT STFT p95",
+      "petrol": 24.2,
+      "lpg": 2.3,
+      "delta": 21.9,
+      "unit": "%"
+    },
+    {
+      "metric": "WOT STFT mean",
+      "petrol": 9.43,
+      "lpg": -0.14,
+      "delta": 9.57,
+      "unit": "%"
+    },
+    {
+      "metric": "Idle MAP (kPa abs)",
+      "petrol": 33.0,
+      "lpg": 25.0,
+      "delta": 8.0,
+      "unit": "kPa"
+    },
+    {
+      "metric": "Idle MAF (g/s)",
+      "petrol": 3.84,
+      "lpg": 2.85,
+      "delta": 0.9899999999999998,
+      "unit": "g/s"
+    },
+    {
+      "metric": "Knock learn p95 (loaded)",
+      "petrol": 6.0,
+      "lpg": 7.0,
+      "delta": -1.0,
+      "unit": "deg"
+    },
+    {
+      "metric": "Health score",
+      "petrol": 0,
+      "lpg": 66,
+      "delta": -66,
+      "unit": "/100"
+    }
+  ],
+  "sev_diff": [
+    {
+      "check_id": "lambda_stoich_tracking",
+      "title": "Lambda CL tracking",
+      "petrol": "alarm",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "power_enrichment",
+      "title": "Power enrichment (WOT)",
+      "petrol": "alarm",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "wot_fuel_delivery",
+      "title": "WOT fuel delivery",
+      "petrol": "alarm",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "injector_health",
+      "title": "Injector cross-load signature",
+      "petrol": "alarm",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "idle_ltft_static",
+      "title": "Idle LTFT (warm)",
+      "petrol": "warn",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "idle_rpm_stability",
+      "title": "Idle RPM stability",
+      "petrol": "warn",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "knock_learn_advance",
+      "title": "Learned knock advance",
+      "petrol": "warn",
+      "lpg": "info",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "timing_warmup",
+      "title": "Ignition timing during warmup",
+      "petrol": "warn",
+      "lpg": "pass",
+      "fuel_specific": "petrol"
+    },
+    {
+      "check_id": "stft_volatility",
+      "title": "STFT volatility (cruise)",
+      "petrol": "pass",
+      "lpg": "warn",
+      "fuel_specific": "lpg"
+    },
+    {
+      "check_id": "vacuum_at_idle",
+      "title": "Manifold vacuum at idle",
+      "petrol": "pass",
+      "lpg": "warn",
+      "fuel_specific": "lpg"
+    }
+  ],
+  "narrative": [
+    "WOT lambda petrol=1.02 (lean) vs lpg=0.99 (correct). The same engine cannot keep stoich at WOT on petrol but can on LPG. Mechanical/intake/ignition causes are excluded; the fault is on the petrol fuel side (injectors, pump, regulator, filter).",
+    "Health score gap = 66 (petrol is materially worse). When the same engine scores very differently between fuels, the problem is fuel-specific to petrol."
+  ],
+  "petrol_file": "logs\\FreeSSM_log_cleared_memory_cold_start_gasoline_only.csv",
+  "lpg_file": "logs\\FreeSSM_log2.csv",
+  "petrol_health": 0,
+  "lpg_health": 66
+}

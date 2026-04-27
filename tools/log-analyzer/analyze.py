@@ -455,6 +455,30 @@ def _stats(xs: list[float]) -> dict[str, float] | None:
     }
 
 
+def _pearson(xs: list[float], ys: list[float], min_n: int = 30) -> float | None:
+    """Pearson correlation coefficient. Returns None if too few points
+    or zero variance on either axis. Single source of truth for r — used
+    by every check that compares two channels.
+    """
+    n = len(xs)
+    if n < min_n or n != len(ys):
+        return None
+    mx = statistics.fmean(xs)
+    my = statistics.fmean(ys)
+    num = 0.0
+    den_x = 0.0
+    den_y = 0.0
+    for x, y in zip(xs, ys):
+        dx = x - mx
+        dy = y - my
+        num += dx * dy
+        den_x += dx * dx
+        den_y += dy * dy
+    if den_x == 0.0 or den_y == 0.0:
+        return None
+    return num / math.sqrt(den_x * den_y)
+
+
 KEYS_FOR_STATS = ["rpm", "load", "vss", "ect", "oil_temp", "iat",
                   "atm_p", "map", "map_rel", "maf_gs", "maf_v", "tps",
                   "tps_main_v", "tps_sub_v", "throttle_motor_duty",
@@ -1196,24 +1220,23 @@ def chk_maf_map_correlation(ctx: CheckCtx) -> Finding:
         return Finding("maf_map_correlation", "MAF / MAP correlation",
                        "skipped", None, "MAF or MAP channel missing.")
     cl = (PHASE_CRUISE, PHASE_PART_LOAD, PHASE_WOT)
-    pairs = [(maf[i], mp[i]) for i in range(ctx.log.rows)
-             if ctx.phases[i] in cl and maf[i] is not None and mp[i] is not None]
-    if len(pairs) < 100:
+    xs: list[float] = []
+    ys: list[float] = []
+    for i in range(ctx.log.rows):
+        if ctx.phases[i] in cl and maf[i] is not None and mp[i] is not None:
+            xs.append(maf[i])
+            ys.append(mp[i])
+    r = _pearson(xs, ys, min_n=100)
+    if r is None:
         return Finding("maf_map_correlation", "MAF / MAP correlation",
-                       "skipped", None, f"Only {len(pairs)} usable pairs.")
-    xs = [a for a, _ in pairs]
-    ys = [b for _, b in pairs]
-    mx = statistics.fmean(xs); my = statistics.fmean(ys)
-    num = sum((x - mx) * (y - my) for x, y in pairs)
-    den = math.sqrt(sum((x - mx) ** 2 for x in xs) * sum((y - my) ** 2 for y in ys))
-    r = (num / den) if den > 0 else 0.0
+                       "skipped", None, f"Only {len(xs)} usable pairs (need 100+).")
     if r >= 0.85:
         sev = "pass"
     elif r >= 0.70:
         sev = "warn"
     else:
         sev = "alarm"
-    msg = (f"MAF vs MAP Pearson r = {r:.2f} across {len(pairs)} loaded samples. "
+    msg = (f"MAF vs MAP Pearson r = {r:.2f} across {len(xs)} loaded samples. "
            + {"pass": "Both sensors agree on engine load \u2014 air-path metrology is consistent.",
               "warn": "Mild disagreement \u2014 one sensor may be drifting (often dirty MAF).",
               "alarm": "Strong disagreement \u2014 inspect MAF and MAP wiring + signal."}[sev])
@@ -1410,17 +1433,20 @@ def chk_oil_temp_lag(ctx: CheckCtx) -> Finding:
 # ---------- Tier 5 (sensor sanity / voltage redundancy) ----------
 
 def _track_voltages(a: list[float | None], b: list[float | None]) -> tuple[float, float] | None:
-    """Return (Pearson r, mean abs delta) over rows where both are present."""
-    pairs = [(a[i], b[i]) for i in range(min(len(a), len(b)))
-             if a[i] is not None and b[i] is not None]
-    if len(pairs) < 100:
+    """Return (Pearson r, mean abs delta) over rows where both are present.
+    Used by the redundant-pair sanity checks (TPS main/sub, pedal main/sub,
+    MAF V vs g/s).
+    """
+    xs: list[float] = []
+    ys: list[float] = []
+    for i in range(min(len(a), len(b))):
+        if a[i] is not None and b[i] is not None:
+            xs.append(a[i])
+            ys.append(b[i])
+    r = _pearson(xs, ys, min_n=100)
+    if r is None:
         return None
-    xs = [x for x, _ in pairs]; ys = [y for _, y in pairs]
-    mx = statistics.fmean(xs); my = statistics.fmean(ys)
-    num = sum((x - mx) * (y - my) for x, y in pairs)
-    den = math.sqrt(sum((x - mx) ** 2 for x in xs) * sum((y - my) ** 2 for y in ys))
-    r = (num / den) if den > 0 else 0.0
-    delta = statistics.fmean(abs(x - y) for x, y in pairs)
+    delta = statistics.fmean(abs(x - y) for x, y in zip(xs, ys))
     return r, delta
 
 
@@ -1641,6 +1667,320 @@ def chk_post_cat_o2(ctx: CheckCtx) -> Finding:
                    "skipped", None, "Only narrowband voltage available; need richer analysis.")
 
 
+# ---------- Tier 1 (extra): cross-load injector signature ----------
+
+def chk_injector_health(ctx: CheckCtx) -> Finding:
+    """Injector cross-load signature.
+
+    A degraded petrol injector produces a SIGN-FLIP between low and high
+    load that no other fault reproduces:
+      - At idle (tiny pulse width), tip seepage / dribble adds extra fuel
+        mass relative to commanded mass -> mixture rich -> LTFT idle goes
+        NEGATIVE.
+      - At WOT (long pulse width), atomizer fouling reduces effective flow
+        per unit time -> mixture lean -> STFT pegs HIGH and/or lambda > 1.0.
+    Vacuum leak is the opposite sign (idle lean), MAF drift is uniform
+    across loads, fuel-pump weakness is lean across the board.
+
+    Note: on a dual-fuel vehicle running petrol, this check cannot
+    distinguish between aged petrol injectors and an LPG injector
+    seeping into the manifold while petrol is supposed to be exclusive.
+    Both produce the same idle-rich signature.
+    """
+    idle_ltft = _phase_median(ctx, PHASE_IDLE, "ltft_b1")
+    p_wot = ctx.summary["per_phase"].get(PHASE_WOT)
+    if idle_ltft is None or _phase_samples(ctx, PHASE_IDLE) < 30:
+        return Finding("injector_health", "Injector cross-load signature",
+                       "skipped", None,
+                       "Need warm-idle LTFT (>=30 samples) for cross-load test.")
+    if not p_wot or "lambda" not in p_wot or p_wot.get("samples", 0) < 10:
+        return Finding("injector_health", "Injector cross-load signature",
+                       "skipped", None,
+                       "No WOT pulls in this log \u2014 cross-load test needs both.")
+    wot_lambda = p_wot["lambda"]["median"]
+    wot_stft = p_wot.get("stft_b1") or {}
+    wot_stft_p95 = wot_stft.get("p95", 0.0)
+    wot_stft_mean = wot_stft.get("mean", 0.0)
+
+    rich_idle = idle_ltft <= -5.0
+    lean_wot = (wot_lambda >= 1.00) or (wot_stft_p95 >= 15.0) or (wot_stft_mean >= 8.0)
+
+    if rich_idle and lean_wot and ctx.fuel_type != "lpg":
+        sev = "alarm"
+        msg = (f"Cross-load injector signature: idle LTFT {idle_ltft:+.1f}% (rich at "
+               f"low pulse-width) AND WOT lambda {wot_lambda:.2f} / STFT p95 "
+               f"{wot_stft_p95:+.1f}%. Textbook signature of degraded petrol "
+               "injectors: tip seepage at idle + atomizer fouling at WOT. "
+               "Recommend off-car flow + leak test (~200 PLN per set). "
+               "Vacuum leak is ruled out (idle direction is rich, not lean).")
+    elif rich_idle and ctx.fuel_type != "lpg":
+        sev = "warn"
+        msg = (f"Idle LTFT {idle_ltft:+.1f}% (rich) but no lean-WOT signature "
+               f"(WOT lambda {wot_lambda:.2f}). Possible: early injector seepage, "
+               "high fuel pressure (FPR vacuum hose disconnected), or \u2014 on a "
+               "dual-fuel vehicle \u2014 LPG injector seepage into manifold even "
+               "while running on petrol. Pull FPR vacuum hose and inspect for fuel.")
+    elif lean_wot:
+        sev = "info"
+        msg = (f"WOT lean (lambda {wot_lambda:.2f}, STFT p95 {wot_stft_p95:+.1f}%) "
+               f"without rich idle (LTFT {idle_ltft:+.1f}%). Consistent with fuel "
+               "filter / pump / pressure issue \u2014 see WOT fuel delivery check.")
+    else:
+        sev = "pass"
+        msg = (f"No cross-load injector signature: idle LTFT {idle_ltft:+.1f}%, "
+               f"WOT lambda {wot_lambda:.2f}, WOT STFT p95 {wot_stft_p95:+.1f}%.")
+    return Finding("injector_health", "Injector cross-load signature",
+                   sev, idle_ltft, msg,
+                   evidence={"idle_ltft": idle_ltft, "wot_lambda": wot_lambda,
+                             "wot_stft_p95": wot_stft_p95,
+                             "wot_stft_mean": wot_stft_mean})
+
+
+# ---------- Tier 3 (extra): O2 dynamic response ----------
+
+def chk_o2_dynamic_response(ctx: CheckCtx) -> Finding:
+    """Wideband O2 dynamic response (zero-crossings/sec around lambda=1).
+
+    In closed loop the lambda signal must oscillate around 1.0 \u2014 the ECU
+    deliberately swings injector pulse width to keep the catalyst happy.
+    A healthy LSU 4.9 / Denso UEGO crosses lambda = 1.0 multiple times per
+    minute under cruise. A frozen signal means a lazy / dead sensor and
+    EVERY downstream fuel-trim diagnostic becomes unreliable.
+
+    Implementation: count sign changes of (lambda - 1.0) across a 0.5%
+    dead band, with 50 ms anti-bounce, in CL phases only.
+    """
+    lam = ctx.log.col("lambda")
+    if lam is None:
+        return Finding("o2_dynamic_response", "O2 dynamic response",
+                       "skipped", None, "No lambda channel.")
+    cl = (PHASE_IDLE, PHASE_CRUISE, PHASE_PART_LOAD)
+    times = ctx.log.time
+    samples_t: list[float] = []
+    samples_d: list[float] = []
+    for i in range(ctx.log.rows):
+        if ctx.phases[i] in cl and lam[i] is not None:
+            samples_t.append(times[i])
+            samples_d.append(lam[i] - 1.0)
+    if len(samples_t) < 200:
+        return Finding("o2_dynamic_response", "O2 dynamic response",
+                       "skipped", None,
+                       f"Only {len(samples_t)} closed-loop samples (need 200+).")
+    DEAD = 0.005
+    ANTI_BOUNCE = 0.05
+    crossings = 0
+    last_sign = 0
+    last_t = samples_t[0]
+    for t, d in zip(samples_t, samples_d):
+        if abs(d) < DEAD:
+            continue
+        sign = 1 if d > 0 else -1
+        if last_sign == 0:
+            last_sign = sign
+            last_t = t
+            continue
+        if sign != last_sign and (t - last_t) >= ANTI_BOUNCE:
+            crossings += 1
+            last_sign = sign
+            last_t = t
+    duration = samples_t[-1] - samples_t[0]
+    if duration <= 0:
+        return Finding("o2_dynamic_response", "O2 dynamic response",
+                       "skipped", None, "Zero CL time span.")
+    rate = crossings / duration
+    if rate >= 0.3:
+        sev = "pass"
+        msg = (f"Lambda zero-crossings = {rate:.2f} Hz over {duration:.0f} s of CL "
+               f"({crossings} crossings) \u2014 sensor responds normally.")
+    elif rate >= 0.1:
+        sev = "warn"
+        msg = (f"Lambda zero-crossings = {rate:.2f} Hz over {duration:.0f} s of CL \u2014 "
+               "sensor sluggish. Aging LSU is common at 200k km. Plan pre-cat "
+               "O2 swap within next service.")
+    else:
+        sev = "alarm"
+        msg = (f"Lambda zero-crossings = {rate:.2f} Hz \u2014 sensor essentially frozen. "
+               "Cross-check O2 wiring + Ri (pre-cat O2 health). All fuel-trim "
+               "diagnostics depend on a responsive O2 \u2014 treat related findings "
+               "with caution until this is resolved.")
+    return Finding("o2_dynamic_response", "O2 dynamic response",
+                   sev, rate, msg,
+                   evidence={"crossings": crossings, "duration_s": round(duration, 1),
+                             "rate_hz": round(rate, 3)})
+
+
+# ---------- Tier 5 (extra): STFT vs battery voltage ----------
+
+def chk_voltage_stft_correlation(ctx: CheckCtx) -> Finding:
+    """STFT correlation with battery voltage.
+
+    Injector deadtime (latency from commanded pulse to needle lift) is
+    voltage-dependent: at low voltage the deadtime is longer. The ECU
+    compensates via a deadtime-vs-voltage table. If that table is wrong
+    (aged injectors, non-OEM injectors, alternator output collapsing under
+    load) STFT will visibly correlate with voltage.
+
+    Healthy: |r| < 0.20.  Concerning: |r| > 0.40.
+    """
+    bat = ctx.log.col("battery")
+    stft = ctx.log.col("stft_b1")
+    if bat is None or stft is None:
+        return Finding("voltage_stft_correlation", "STFT vs battery voltage",
+                       "skipped", None, "Battery or STFT channel missing.")
+    drive = (PHASE_IDLE, PHASE_CRUISE, PHASE_PART_LOAD)
+    xs: list[float] = []
+    ys: list[float] = []
+    for i in range(ctx.log.rows):
+        if ctx.phases[i] not in drive:
+            continue
+        if bat[i] is not None and stft[i] is not None:
+            xs.append(bat[i])
+            ys.append(stft[i])
+    r = _pearson(xs, ys, min_n=100)
+    if r is None:
+        return Finding("voltage_stft_correlation", "STFT vs battery voltage",
+                       "skipped", None, f"Insufficient overlap ({len(xs)} samples).")
+    if abs(r) < 0.20:
+        sev = "pass"
+        msg = (f"STFT vs battery r = {r:+.2f} ({len(xs)} samples) \u2014 deadtime "
+               "compensation is effectively independent of voltage.")
+    elif abs(r) < 0.40:
+        sev = "info"
+        msg = f"STFT vs battery r = {r:+.2f}. Mild voltage dependence; monitor."
+    else:
+        sev = "warn"
+        bias = ("STFT rises when battery sags" if r < 0
+                else "STFT rises when battery swells")
+        msg = (f"STFT vs battery r = {r:+.2f}. {bias}. Likely cause: injector "
+               "deadtime table inaccurate (aged / non-OEM injectors), or "
+               "alternator output too soft under load. Cross-check the "
+               "battery / alternator finding.")
+    return Finding("voltage_stft_correlation", "STFT vs battery voltage",
+                   sev, r, msg, evidence={"r": round(r, 3), "n": len(xs)})
+
+
+# ---------- Tier 4 (extra): thermostat regulation band ----------
+
+def chk_thermostat_regulation(ctx: CheckCtx) -> Finding:
+    """Thermostat regulation band after warm-up.
+
+    Once ECT first reaches the regulation set-point (~82-88 \u00b0C for EJ253),
+    a healthy thermostat keeps it within \u00b15 \u00b0C. Stuck-open (the common
+    failure mode) lets ECT drift below set-point under load. Failed-shut
+    overheats; rare but tracked.
+    """
+    ect = ctx.log.col("ect")
+    if ect is None:
+        return Finding("thermostat_regulation", "Thermostat regulation band",
+                       "skipped", None, "No ECT channel.")
+    times = ctx.log.time
+    start_i = None
+    for i in range(ctx.log.rows):
+        if ect[i] is not None and ect[i] >= 82:
+            start_i = i
+            break
+    if start_i is None:
+        return Finding("thermostat_regulation", "Thermostat regulation band",
+                       "skipped", None, "Engine never reached 82 \u00b0C in this log.")
+    tail = [ect[i] for i in range(start_i, ctx.log.rows) if ect[i] is not None]
+    elapsed = times[-1] - times[start_i]
+    if len(tail) < 60 or elapsed < 60:
+        return Finding("thermostat_regulation", "Thermostat regulation band",
+                       "skipped", None,
+                       "Less than 60 s of warmed-up data after first 82 \u00b0C.")
+    median = statistics.median(tail)
+    std = statistics.pstdev(tail)
+    minimum = min(tail)
+    maximum = max(tail)
+    span = maximum - minimum
+    if maximum > 105:
+        sev = "alarm"
+        msg = (f"ECT max {maximum:.0f} \u00b0C \u2014 overheating event in this log. "
+               "Check thermostat (stuck closed), water pump, fan operation, "
+               "head gasket sealing.")
+    elif median < 78 or minimum < 70:
+        sev = "warn"
+        msg = (f"ECT median {median:.0f} \u00b0C, min {minimum:.0f}, span {span:.0f} \u00b0C \u2014 "
+               "thermostat appears stuck open (under-cooling). Symptoms: weak "
+               "cabin heater, fuel-economy hit, longer warm-up = more wear.")
+    elif std > 6 or span > 18:
+        sev = "warn"
+        msg = (f"ECT median {median:.0f} \u00b0C with wide regulation band (std "
+               f"{std:.1f}, span {span:.0f}). Thermostat may be cycling abnormally.")
+    elif 80 <= median <= 96 and std <= 4 and span <= 12:
+        sev = "pass"
+        msg = (f"ECT regulated at {median:.0f} \u00b0C (std {std:.1f}, span {span:.0f}) "
+               f"after warm-up \u2014 thermostat is regulating cleanly.")
+    else:
+        sev = "info"
+        msg = f"ECT median {median:.0f} \u00b0C, std {std:.1f}, span {span:.0f} \u00b0C."
+    return Finding("thermostat_regulation", "Thermostat regulation band",
+                   sev, median, msg,
+                   evidence={"median": round(median, 1), "std": round(std, 2),
+                             "min": minimum, "max": maximum, "n": len(tail)})
+
+
+# ---------- Tier 6 (extra): EVAP purge fingerprint ----------
+
+def chk_evap_purge_fingerprint(ctx: CheckCtx) -> Finding:
+    """EVAP purge effect on STFT.
+
+    The canister-purge solenoid (CPC) routes fuel-vapor-laden air from the
+    EVAP canister into the intake manifold. When it opens, mixture briefly
+    enriches; a healthy ECU compensates and STFT settles within seconds.
+    A stuck-open or leaking CPC creates a near-permanent rich contribution
+    that the ECU cannot decouple from real fuel correction.
+
+    Implementation: split STFT in CRUISE/PART_LOAD by CPC duty (>=30 % vs
+    <=5 %); compare means.
+    """
+    cpc = ctx.log.col("cpc_duty")
+    stft = ctx.log.col("stft_b1")
+    if cpc is None or stft is None:
+        return Finding("evap_purge_fingerprint", "EVAP purge fingerprint",
+                       "skipped", None, "CPC duty or STFT channel missing.")
+    cl = (PHASE_CRUISE, PHASE_PART_LOAD)
+    high: list[float] = []
+    low: list[float] = []
+    for i in range(ctx.log.rows):
+        if ctx.phases[i] not in cl:
+            continue
+        c = cpc[i]
+        s = stft[i]
+        if c is None or s is None:
+            continue
+        if c >= 30:
+            high.append(s)
+        elif c <= 5:
+            low.append(s)
+    if len(high) < 30 or len(low) < 30:
+        return Finding("evap_purge_fingerprint", "EVAP purge fingerprint",
+                       "skipped", None,
+                       f"Need both purge-active (>=30%, have {len(high)}) and "
+                       f"purge-inactive (<=5%, have {len(low)}) cruise samples.")
+    diff = statistics.fmean(high) - statistics.fmean(low)
+    if abs(diff) <= 2.5:
+        sev = "pass"
+        msg = (f"STFT difference between purge-active and purge-inactive cruise = "
+               f"{diff:+.1f} pp ({len(high)}/{len(low)} samples) \u2014 ECU "
+               "decouples purge contribution cleanly.")
+    elif abs(diff) <= 5:
+        sev = "info"
+        msg = (f"STFT difference {diff:+.1f} pp between purge states. Mild "
+               "footprint; monitor over time.")
+    else:
+        sev = "warn"
+        direction = "rich-shifting" if diff < 0 else "lean-shifting"
+        msg = (f"STFT difference {diff:+.1f} pp \u2014 purge solenoid leaves a "
+               f"{direction} footprint on closed-loop fuelling. Possible: "
+               "stuck-open or leaking CPC, EVAP canister saturated. Verify by "
+               "clamping the purge hose and re-logging the same drive.")
+    return Finding("evap_purge_fingerprint", "EVAP purge fingerprint",
+                   sev, diff, msg,
+                   evidence={"diff_pp": round(diff, 2),
+                             "n_high": len(high), "n_low": len(low)})
+
+
 CHECKS_TIER1: list[Check] = [
     Check("idle_ltft_static",     "Idle LTFT (warm)",         1, ("petrol", "lpg"), chk_idle_ltft_static),
     Check("cruise_ltft_static",   "Cruise LTFT (warm)",       1, ("petrol", "lpg"), chk_cruise_ltft_static),
@@ -1651,6 +1991,7 @@ CHECKS_TIER1: list[Check] = [
     Check("wot_fuel_delivery",    "WOT fuel delivery",        1, ("petrol", "lpg"), chk_wot_fuel_delivery),
     Check("dfco_present",         "DFCO detection",           1, ("petrol", "lpg"), chk_dfco_present),
     Check("idle_rpm_stability",   "Idle RPM stability",       1, ("petrol", "lpg"), chk_idle_rpm_stability),
+    Check("injector_health",      "Injector cross-load sig.", 1, ("petrol", "lpg"), chk_injector_health),
 ]
 
 CHECKS_TIER2: list[Check] = [
@@ -1664,11 +2005,13 @@ CHECKS_TIER3: list[Check] = [
     Check("knock_active_retard",  "Active knock retard",      3, ("petrol", "lpg"), chk_knock_active_retard),
     Check("knock_learn_advance",  "Learned knock advance",    3, ("petrol", "lpg"), chk_knock_learn_advance),
     Check("timing_warmup",        "Timing during warmup",     3, ("petrol", "lpg"), chk_timing_warmup),
+    Check("o2_dynamic_response",  "O2 dynamic response",      3, ("petrol", "lpg"), chk_o2_dynamic_response),
 ]
 
 CHECKS_TIER4: list[Check] = [
     Check("coolant_warmup_rate",  "Coolant warmup rate",      4, ("petrol", "lpg"), chk_coolant_warmup_rate),
     Check("oil_temp_lag",         "Oil vs coolant lag",       4, ("petrol", "lpg"), chk_oil_temp_lag),
+    Check("thermostat_regulation","Thermostat regulation",    4, ("petrol", "lpg"), chk_thermostat_regulation),
 ]
 
 CHECKS_TIER5: list[Check] = [
@@ -1677,11 +2020,13 @@ CHECKS_TIER5: list[Check] = [
     Check("maf_voltage_consistency",  "MAF V/g/s agreement",     5, ("petrol", "lpg"), chk_maf_voltage_consistency),
     Check("o2_pre_health",            "Pre-cat O2 health",       5, ("petrol", "lpg"), chk_o2_pre_health),
     Check("battery_charging",         "Battery / alternator",    5, ("petrol", "lpg"), chk_battery_charging),
+    Check("voltage_stft_correlation", "STFT vs voltage",         5, ("petrol", "lpg"), chk_voltage_stft_correlation),
 ]
 
 CHECKS_TIER6: list[Check] = [
     Check("evap_pressure_event", "EVAP pressure event",      6, ("petrol", "lpg"), chk_evap_pressure_event),
     Check("post_cat_o2",         "Post-cat O2",              6, ("petrol", "lpg"), chk_post_cat_o2),
+    Check("evap_purge_fingerprint","EVAP purge fingerprint",  6, ("petrol", "lpg"), chk_evap_purge_fingerprint),
 ]
 
 ALL_CHECKS: list[Check] = (CHECKS_TIER1 + CHECKS_TIER2 + CHECKS_TIER3
@@ -1896,8 +2241,196 @@ def format_md(summary: dict[str, Any]) -> str:
 
 
 # ============================================================================
+# Section 8b — Cross-fuel comparison
+# ============================================================================
+
+# Metrics extracted from a summary for side-by-side comparison. Each entry
+# is (label, extractor_fn, unit, precision). Adding a new metric is one line.
+_COMPARE_METRICS: list[tuple[str, Callable[[dict[str, Any]], float | None], str, int]] = [
+    ("Idle LTFT (median)",
+     lambda s: ((s["per_phase"].get(PHASE_IDLE) or {}).get("ltft_b1") or {}).get("median"),
+     "%", 2),
+    ("Idle STFT (mean)",
+     lambda s: ((s["per_phase"].get(PHASE_IDLE) or {}).get("stft_b1") or {}).get("mean"),
+     "%", 2),
+    ("Cruise LTFT (median)",
+     lambda s: ((s["per_phase"].get(PHASE_CRUISE) or {}).get("ltft_b1") or {}).get("median"),
+     "%", 2),
+    ("Cruise STFT std",
+     lambda s: ((s["per_phase"].get(PHASE_CRUISE) or {}).get("stft_b1") or {}).get("std"),
+     "%", 2),
+    ("WOT lambda (median)",
+     lambda s: ((s["per_phase"].get(PHASE_WOT) or {}).get("lambda") or {}).get("median"),
+     "", 3),
+    ("WOT STFT p95",
+     lambda s: ((s["per_phase"].get(PHASE_WOT) or {}).get("stft_b1") or {}).get("p95"),
+     "%", 2),
+    ("WOT STFT mean",
+     lambda s: ((s["per_phase"].get(PHASE_WOT) or {}).get("stft_b1") or {}).get("mean"),
+     "%", 2),
+    ("Idle MAP (kPa abs)",
+     lambda s: ((s["per_phase"].get(PHASE_IDLE) or {}).get("map") or {}).get("median"),
+     "kPa", 1),
+    ("Idle MAF (g/s)",
+     lambda s: ((s["per_phase"].get(PHASE_IDLE) or {}).get("maf_gs") or {}).get("median"),
+     "g/s", 2),
+    ("Knock learn p95 (loaded)",
+     lambda s: next((f["evidence"].get("p95") for f in s["findings"]
+                     if f["check_id"] == "knock_learn_advance"), None),
+     "deg", 2),
+    ("Health score",
+     lambda s: s["health_score"],
+     "/100", 0),
+]
+
+
+def compare_summaries(petrol: dict[str, Any], lpg: dict[str, Any]) -> dict[str, Any]:
+    """Compute side-by-side metric deltas. Returns a structured dict for
+    machine consumption and a list of human-readable observations.
+    """
+    rows: list[dict[str, Any]] = []
+    for label, extract, unit, _prec in _COMPARE_METRICS:
+        try:
+            pv = extract(petrol)
+            lv = extract(lpg)
+        except Exception:  # noqa: BLE001 — extractor failure must not kill compare
+            pv = lv = None
+        delta = (pv - lv) if (isinstance(pv, (int, float))
+                              and isinstance(lv, (int, float))) else None
+        rows.append({"metric": label, "petrol": pv, "lpg": lv,
+                     "delta": delta, "unit": unit})
+
+    findings_p = {f["check_id"]: f for f in petrol.get("findings", [])}
+    findings_l = {f["check_id"]: f for f in lpg.get("findings", [])}
+    sev_diff: list[dict[str, Any]] = []
+    sev_rank = {"pass": 0, "info": 1, "warn": 2, "alarm": 3, "skipped": -1}
+    for cid, fp in findings_p.items():
+        fl = findings_l.get(cid)
+        if fl is None:
+            continue
+        rp = sev_rank.get(fp["severity"], -1)
+        rl = sev_rank.get(fl["severity"], -1)
+        if rp >= 0 and rl >= 0 and rp != rl:
+            sev_diff.append({
+                "check_id": cid,
+                "title": fp["title"],
+                "petrol": fp["severity"],
+                "lpg": fl["severity"],
+                "fuel_specific": "petrol" if rp > rl else "lpg",
+            })
+
+    # Auto-narrate the most diagnostic patterns.
+    narrative: list[str] = []
+    def _val(label: str) -> tuple[Any, Any]:
+        for r in rows:
+            if r["metric"] == label:
+                return r["petrol"], r["lpg"]
+        return None, None
+
+    pp, pl = _val("WOT lambda (median)")
+    if isinstance(pp, (int, float)) and isinstance(pl, (int, float)):
+        if pp >= 1.00 and pl < 1.00:
+            narrative.append(
+                f"WOT lambda petrol={pp:.2f} (lean) vs lpg={pl:.2f} (correct). "
+                "The same engine cannot keep stoich at WOT on petrol but can on "
+                "LPG. Mechanical/intake/ignition causes are excluded; the fault "
+                "is on the petrol fuel side (injectors, pump, regulator, filter).")
+    pp, pl = _val("Idle LTFT (median)")
+    if isinstance(pp, (int, float)) and isinstance(pl, (int, float)):
+        if pp <= -4.0 and abs(pl) < 4.0:
+            narrative.append(
+                f"Idle LTFT petrol={pp:+.1f}% (rich) vs lpg={pl:+.1f}% (neutral). "
+                "Petrol-only rich idle suggests petrol-side seepage: leaking "
+                "petrol injector(s) or LPG injector dribbling into the manifold "
+                "while the ECU runs in petrol mode.")
+        elif pp >= 4.0 and abs(pl) < 4.0:
+            narrative.append(
+                f"Idle LTFT petrol={pp:+.1f}% (lean) vs lpg={pl:+.1f}% (neutral). "
+                "Petrol-only lean idle suggests low petrol fuel pressure or "
+                "clogged petrol injectors.")
+    pp, pl = _val("Health score")
+    if isinstance(pp, (int, float)) and isinstance(pl, (int, float)):
+        if abs(pp - pl) >= 30:
+            worse = "petrol" if pp < pl else "lpg"
+            narrative.append(
+                f"Health score gap = {abs(pp - pl)} ({worse} is materially worse). "
+                "When the same engine scores very differently between fuels, the "
+                f"problem is fuel-specific to {worse}.")
+
+    return {"rows": rows, "sev_diff": sev_diff, "narrative": narrative,
+            "petrol_file": petrol.get("file"), "lpg_file": lpg.get("file"),
+            "petrol_health": petrol.get("health_score"),
+            "lpg_health": lpg.get("health_score")}
+
+
+def format_compare_md(cmp: dict[str, Any]) -> str:
+    lines: list[str] = []
+    a = lines.append
+    a("# FreeSSM Cross-Fuel Comparison Report")
+    a("")
+    a(f"**Petrol log:** `{cmp.get('petrol_file')}` (health {cmp.get('petrol_health')}/100)  ")
+    a(f"**LPG log:**    `{cmp.get('lpg_file')}` (health {cmp.get('lpg_health')}/100)")
+    a("")
+    if cmp.get("narrative"):
+        a("## Auto-narrative")
+        for n in cmp["narrative"]:
+            a(f"- {n}")
+        a("")
+    a("## Side-by-side metrics")
+    a("| Metric | Petrol | LPG | \u0394 (petrol - lpg) | Unit |")
+    a("|---|---:|---:|---:|---|")
+    def _fmt(v: Any, prec: int = 2) -> str:
+        if isinstance(v, (int, float)):
+            return f"{v:+.{prec}f}" if isinstance(v, float) else str(v)
+        return "-" if v is None else str(v)
+    for r in cmp["rows"]:
+        a(f"| {r['metric']} | {_fmt(r['petrol'])} | {_fmt(r['lpg'])} | "
+          f"{_fmt(r['delta'])} | {r['unit']} |")
+    a("")
+    if cmp.get("sev_diff"):
+        a("## Checks with different severity between fuels")
+        a("| Check | Petrol | LPG | Fuel-specific |")
+        a("|---|---|---|---|")
+        for d in cmp["sev_diff"]:
+            a(f"| {d['title']} | {d['petrol']} | {d['lpg']} | {d['fuel_specific']} |")
+        a("")
+    return "\n".join(lines)
+
+
+# ============================================================================
 # Section 9 — CLI
 # ============================================================================
+
+def _analyze_one(csv_path: Path, fuel_type: str, out_dir: Path) -> dict[str, Any]:
+    """Run the full pipeline for one CSV and write {stem}.report.md +
+    {stem}.summary.json into out_dir. Returns the summary dict.
+    """
+    log = load_csv(csv_path)
+    summary = summarize(log, fuel_type=fuel_type)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = csv_path.stem
+    md_path = out_dir / f"{stem}.report.md"
+    json_path = out_dir / f"{stem}.summary.json"
+    md_path.write_text(format_md(summary), encoding="utf-8")
+    json_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False),
+                         encoding="utf-8")
+    print(f"Wrote {md_path}")
+    print(f"Wrote {json_path}")
+    return summary
+
+
+def _print_console_summary(summary: dict[str, Any]) -> None:
+    findings = summary["findings"]
+    alarms = [f for f in findings if f["severity"] == "alarm"]
+    warns = [f for f in findings if f["severity"] == "warn"]
+    print(f"Health score: {summary['health_score']}/100")
+    print(f"Findings: {len(alarms)} alarm, {len(warns)} warn, "
+          f"{len([f for f in findings if f['severity'] == 'pass'])} pass, "
+          f"{len([f for f in findings if f['severity'] == 'skipped'])} skipped")
+    for f in alarms + warns:
+        print(f"  {SEV_BADGE.get(f['severity'])} {f['title']}: "
+              f"{f['explanation'].splitlines()[0]}")
+
 
 def main(argv: list[str]) -> int:
     # Force UTF-8 stdout so we can print Greek letters and arrows on Windows.
@@ -1912,40 +2445,51 @@ def main(argv: list[str]) -> int:
                    help="Fuel type during the recorded run (default: unknown)")
     p.add_argument("--out-dir", type=Path, default=None,
                    help="Output directory (default: same as input file)")
+    p.add_argument("--compare-with", type=Path, default=None,
+                   help="Second CSV log on the OTHER fuel; emits a "
+                        "comparison.report.md alongside the per-fuel reports.")
+    p.add_argument("--compare-fuel", choices=["petrol", "lpg"], default=None,
+                   help="Fuel type of --compare-with log (required with it)")
     args = p.parse_args(argv[1:])
 
     if not args.csv.exists():
         print(f"File not found: {args.csv}", file=sys.stderr)
         return 1
 
-    log = load_csv(args.csv)
-    summary = summarize(log, fuel_type=args.fuel)
-
     out_dir = args.out_dir if args.out_dir else args.csv.parent
-    out_dir.mkdir(parents=True, exist_ok=True)
-    stem = args.csv.stem
+    summary = _analyze_one(args.csv, args.fuel, out_dir)
+    _print_console_summary(summary)
 
-    md_path = out_dir / f"{stem}.report.md"
-    json_path = out_dir / f"{stem}.summary.json"
+    if args.compare_with is not None:
+        if args.compare_fuel is None:
+            print("--compare-with requires --compare-fuel", file=sys.stderr)
+            return 2
+        if not args.compare_with.exists():
+            print(f"Compare file not found: {args.compare_with}", file=sys.stderr)
+            return 1
+        if args.fuel == args.compare_fuel or args.fuel == "unknown":
+            print("--compare-with should target the OTHER fuel "
+                  "(e.g. primary --fuel petrol, --compare-fuel lpg).",
+                  file=sys.stderr)
+        summary2 = _analyze_one(args.compare_with, args.compare_fuel, out_dir)
+        _print_console_summary(summary2)
 
-    md_path.write_text(format_md(summary), encoding="utf-8")
-    json_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False),
-                         encoding="utf-8")
-
-    print(f"Wrote {md_path}")
-    print(f"Wrote {json_path}")
-    print(f"Health score: {summary['health_score']}/100")
-
-    # Console summary
-    findings = summary["findings"]
-    alarms = [f for f in findings if f["severity"] == "alarm"]
-    warns = [f for f in findings if f["severity"] == "warn"]
-    print(f"Findings: {len(alarms)} alarm, {len(warns)} warn, "
-          f"{len([f for f in findings if f['severity'] == 'pass'])} pass, "
-          f"{len([f for f in findings if f['severity'] == 'skipped'])} skipped")
-    for f in alarms + warns:
-        print(f"  {SEV_BADGE.get(f['severity'])} {f['title']}: "
-              f"{f['explanation'].splitlines()[0]}")
+        # Build comparison with petrol on the LEFT regardless of CLI order.
+        if args.fuel == "petrol":
+            cmp = compare_summaries(summary, summary2)
+        else:
+            cmp = compare_summaries(summary2, summary)
+        cmp_md = out_dir / "comparison.report.md"
+        cmp_json = out_dir / "comparison.summary.json"
+        cmp_md.write_text(format_compare_md(cmp), encoding="utf-8")
+        cmp_json.write_text(json.dumps(cmp, indent=2, ensure_ascii=False),
+                            encoding="utf-8")
+        print(f"Wrote {cmp_md}")
+        print(f"Wrote {cmp_json}")
+        if cmp["narrative"]:
+            print("\nCross-fuel narrative:")
+            for n in cmp["narrative"]:
+                print(f"  - {n}")
     return 0
 
 

@@ -18,7 +18,7 @@
  */
 
 
-#define FSSM_VERSION "1.3.0-ms.10"
+#define FSSM_VERSION "1.3.0-ms.11"
 
 
 #include <QtGui>
