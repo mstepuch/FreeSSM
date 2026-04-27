@@ -19,6 +19,12 @@
 
 #include "AddMBsSWsDlg.h"
 
+#include <numeric>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QBoxLayout>
+#include <QHeaderView>
+
 
 
 AddMBsSWsDlg::AddMBsSWsDlg(QWidget *parent, std::vector<mb_dt> supportedMBs, std::vector<sw_dt> supportedSWs,
@@ -29,8 +35,43 @@ AddMBsSWsDlg::AddMBsSWsDlg(QWidget *parent, std::vector<mb_dt> supportedMBs, std
 
 	_MBSWmetaList = MBSWmetaList;
 	_unselectedMBsSWs_metaList.clear();
+	_selectionAnchorRow = -1;
 	// Setup GUI:
 	setupUi(this);
+	// Insert search box above the table.
+	_searchEdit = new QLineEdit(this);
+	_searchEdit->setPlaceholderText(tr("Search (e.g. solenoid, EVAP, temperature)..."));
+	_searchEdit->setClearButtonEnabled(true);
+	if (QBoxLayout* boxLayout = qobject_cast<QBoxLayout*>(MBsSWs_tableWidget->parentWidget()->layout()))
+	{
+		const int tableIndex = boxLayout->indexOf(MBsSWs_tableWidget);
+		boxLayout->insertWidget(tableIndex >= 0 ? tableIndex : 0, _searchEdit);
+	}
+	else if (QGridLayout* gridLayout = qobject_cast<QGridLayout*>(MBsSWs_tableWidget->parentWidget()->layout()))
+	{
+		// Fallback for small-resolution UI (QGridLayout): push the table down by one row.
+		const int rows = gridLayout->rowCount();
+		for (int r = rows - 1; r >= 0; --r)
+		{
+			for (int c = 0; c < gridLayout->columnCount(); ++c)
+			{
+				QLayoutItem* it = gridLayout->itemAtPosition(r, c);
+				if (!it) continue;
+				QWidget* w = it->widget();
+				if (!w) continue;
+				int fr, fc, rs, cs;
+				gridLayout->getItemPosition(gridLayout->indexOf(w), &fr, &fc, &rs, &cs);
+				gridLayout->removeWidget(w);
+				gridLayout->addWidget(w, fr + 1, fc, rs, cs);
+			}
+		}
+		gridLayout->addWidget(_searchEdit, 0, 0, 1, gridLayout->columnCount() > 0 ? gridLayout->columnCount() : 1);
+	}
+	// Click without modifiers keeps previous selection (MultiSelection);
+	// Shift+click is handled manually in eventFilter() to produce a range selection.
+	MBsSWs_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+	MBsSWs_tableWidget->setSelectionMode(QAbstractItemView::MultiSelection);
+	MBsSWs_tableWidget->viewport()->installEventFilter(this);
 	// enable maximize and minimize buttons
 	//   GNOME 3 at least: this also enables fast window management e.g. "View split on left" (Super-Left), "... right" (Super-Right)
 	setWindowFlags( Qt::Window );
@@ -107,6 +148,36 @@ AddMBsSWsDlg::AddMBsSWsDlg(QWidget *parent, std::vector<mb_dt> supportedMBs, std
 		}
 	}
 
+	// Sort available entries alphabetically by title while keeping metadata mapping intact.
+	if (items.size() == _unselectedMBsSWs_metaList.size() && items.size() > 1)
+	{
+		std::vector<size_t> sortedIndexes(items.size());
+		std::iota(sortedIndexes.begin(), sortedIndexes.end(), 0);
+		std::stable_sort(sortedIndexes.begin(), sortedIndexes.end(), [&items](size_t a, size_t b)
+		{
+			const QString titleA = items.at(a).title.toLower();
+			const QString titleB = items.at(b).title.toLower();
+			return QString::localeAwareCompare(titleA, titleB) < 0;
+		});
+
+		std::vector<Item> sortedItems;
+		std::vector<MBSWmetadata_dt> sortedMetadata;
+		sortedItems.reserve(items.size());
+		sortedMetadata.reserve(_unselectedMBsSWs_metaList.size());
+
+		for (size_t index : sortedIndexes)
+		{
+			sortedItems.push_back(items.at(index));
+			sortedMetadata.push_back(_unselectedMBsSWs_metaList.at(index));
+		}
+
+		items.swap(sortedItems);
+		_unselectedMBsSWs_metaList.swap(sortedMetadata);
+	}
+
+	_allItems = items;
+	_visibleToAllIndex.resize(_allItems.size());
+	std::iota(_visibleToAllIndex.begin(), _visibleToAllIndex.end(), 0);
 	setContent(items);
 	// Enable/disable "Add" button:
 	setAddButtonEnableStatus();
@@ -114,6 +185,8 @@ AddMBsSWsDlg::AddMBsSWsDlg(QWidget *parent, std::vector<mb_dt> supportedMBs, std
 	connect(add_pushButton, SIGNAL( released() ), this, SLOT( add() ));
 	connect(cancel_pushButton, SIGNAL( released() ), this, SLOT( cancel() ));
 	connect(MBsSWs_tableWidget, SIGNAL( itemSelectionChanged() ), this, SLOT( setAddButtonEnableStatus() ));
+	connect(_searchEdit, SIGNAL( textChanged(QString) ), this, SLOT( applyFilter(QString) ));
+	_searchEdit->setFocus();
 }
 
 
@@ -122,6 +195,7 @@ AddMBsSWsDlg::~AddMBsSWsDlg()
 	disconnect(add_pushButton, SIGNAL( released() ), this, SLOT( add() ));
 	disconnect(cancel_pushButton, SIGNAL( released() ), this, SLOT( cancel() ));
 	disconnect(MBsSWs_tableWidget, SIGNAL( itemSelectionChanged() ), this, SLOT( setAddButtonEnableStatus() ));
+	disconnect(_searchEdit, SIGNAL( textChanged(QString) ), this, SLOT( applyFilter(QString) ));
 }
 
 
@@ -131,11 +205,21 @@ void AddMBsSWsDlg::add()
 	QItemSelectionModel *selModel = MBsSWs_tableWidget->selectionModel();
 	QModelIndexList MIlist = selModel->selectedRows();
 	std::sort(MIlist.begin(), MIlist.end(), rowIndexLessThan);	// since Qt 4.4.1, we have to sort the QModelIndexes...
+	std::vector<int> metaIndexes;
+	metaIndexes.reserve(MIlist.size());
 	for (const QModelIndex& mi : MIlist)
 	{
-		int index = mi.row();
-		_MBSWmetaList->push_back( _unselectedMBsSWs_metaList.at(index) );
+		const int visibleRow = mi.row();
+		if (visibleRow < 0 || visibleRow >= (int)_visibleToAllIndex.size())
+			continue;
+		const int metaIdx = _visibleToAllIndex.at(visibleRow);
+		if (metaIdx < 0 || metaIdx >= (int)_unselectedMBsSWs_metaList.size())
+			continue;
+		metaIndexes.push_back(metaIdx);
 	}
+	std::sort(metaIndexes.begin(), metaIndexes.end());
+	for (int idx : metaIndexes)
+		_MBSWmetaList->push_back( _unselectedMBsSWs_metaList.at(idx) );
 	close();
 }
 
@@ -183,4 +267,51 @@ void AddMBsSWsDlg::setContent(const std::vector<Item>& items)
 		//tableelement->setTextAlignment(alignment);
 		MBsSWs_tableWidget->setItem(row, static_cast<int>(Column::unit), tableelement);
 	}
+}
+
+
+void AddMBsSWsDlg::applyFilter(const QString& text)
+{
+	const QString needle = text.trimmed();
+	std::vector<Item> visible;
+	_visibleToAllIndex.clear();
+	visible.reserve(_allItems.size());
+	_visibleToAllIndex.reserve(_allItems.size());
+	for (size_t i = 0; i < _allItems.size(); ++i)
+	{
+		const Item& it = _allItems.at(i);
+		if (needle.isEmpty() || it.title.contains(needle, Qt::CaseInsensitive)
+		                     || it.unit.contains(needle, Qt::CaseInsensitive))
+		{
+			visible.push_back(it);
+			_visibleToAllIndex.push_back(static_cast<int>(i));
+		}
+	}
+	_selectionAnchorRow = -1;
+	setContent(visible);
+	setAddButtonEnableStatus();
+}
+
+
+bool AddMBsSWsDlg::eventFilter(QObject *obj, QEvent *event)
+{
+	if (obj == MBsSWs_tableWidget->viewport() && event->type() == QEvent::MouseButtonPress)
+	{
+		QMouseEvent *me = static_cast<QMouseEvent*>(event);
+		if (me->button() == Qt::LeftButton)
+		{
+			const int row = MBsSWs_tableWidget->indexAt(me->pos()).row();
+			if (row >= 0 && (me->modifiers() & Qt::ShiftModifier) && _selectionAnchorRow >= 0)
+			{
+				const int from = std::min(_selectionAnchorRow, row);
+				const int to   = std::max(_selectionAnchorRow, row);
+				QTableWidgetSelectionRange range(from, 0, to, MBsSWs_tableWidget->columnCount() - 1);
+				MBsSWs_tableWidget->setRangeSelected(range, true);
+				return true; // swallow: don't let MultiSelection toggle the clicked row
+			}
+			if (row >= 0)
+				_selectionAnchorRow = row;
+		}
+	}
+	return QDialog::eventFilter(obj, event);
 }

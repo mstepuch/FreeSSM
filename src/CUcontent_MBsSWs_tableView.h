@@ -58,6 +58,8 @@ private:
 
 	void resizeEvent(QResizeEvent *event);
 	bool eventFilter(QObject *obj, QEvent *event);
+	bool handleDropEvent(QDropEvent *dropEvent, const QPoint& viewportPos);
+	int getDropTargetRow(const QPoint& viewportPos) const;
 	void updateMBColumn(const std::vector<QString>& data, CUcontent_MBsSWs_tableView::Column col, Qt::Alignment alignment = Qt::AlignCenter);
 	void updateTypesColumn(const std::vector<BlockType>& types);
 

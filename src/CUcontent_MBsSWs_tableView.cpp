@@ -287,6 +287,50 @@ void CUcontent_MBsSWs_tableView::scrollMBSWtable(unsigned int rowindex)
 }
 
 
+bool CUcontent_MBsSWs_tableView::handleDropEvent(QDropEvent *dropEvent, const QPoint& viewportPos)
+{
+	const int toRow = getDropTargetRow(viewportPos);
+	if (_dragStartRow >= 0 && toRow >= 0 && _dragStartRow != toRow)
+	{
+		emit rowMoveRequested(_dragStartRow, toRow);
+	}
+	// Always mark the drop as IgnoreAction and accept it ourselves, so that
+	// QAbstractItemView::startDrag() does NOT remove the source row after the
+	// internal-move drag completes (which would leave an empty row behind).
+	// We already rebuilt the whole table via displayMBsSWs() in the slot.
+	dropEvent->setDropAction(Qt::IgnoreAction);
+	dropEvent->accept();
+	_dragStartRow = -1;
+	return true;
+}
+
+
+int CUcontent_MBsSWs_tableView::getDropTargetRow(const QPoint& viewportPos) const
+{
+	if (_nrofMBsSWs < 1)
+		return -1;
+
+	int row = selectedMBsSWs_tableWidget->indexAt(viewportPos).row();
+	if (row < 0)
+	{
+		const int lastRow = static_cast<int>(_nrofMBsSWs) - 1;
+		const int lastRowBottom = selectedMBsSWs_tableWidget->rowViewportPosition(lastRow)
+		                       + selectedMBsSWs_tableWidget->rowHeight(lastRow);
+		if (viewportPos.y() >= lastRowBottom)
+			row = lastRow;
+	}
+
+	if (row < 0)
+		return -1;
+
+	const int maxRow = static_cast<int>(_nrofMBsSWs) - 1;
+	if (row > maxRow)
+		row = maxRow;
+
+	return row;
+}
+
+
 void CUcontent_MBsSWs_tableView::resizeEvent(QResizeEvent *event)
 {
 	// Get available vertical space (for rows) and height per row:
@@ -327,17 +371,19 @@ bool CUcontent_MBsSWs_tableView::eventFilter(QObject *obj, QEvent *event)
 			QMouseEvent *me = static_cast<QMouseEvent*>(event);
 			_dragStartRow = selectedMBsSWs_tableWidget->indexAt(me->pos()).row();
 		}
+		if (event->type() == QEvent::Drop)
+		{
+			QDropEvent *de = static_cast<QDropEvent*>(event);
+			return handleDropEvent(de, de->pos());
+		}
 	}
 	if (obj == selectedMBsSWs_tableWidget)
 	{
 		if (event->type() == QEvent::Drop)
 		{
 			QDropEvent *de = static_cast<QDropEvent*>(event);
-			int toRow = selectedMBsSWs_tableWidget->indexAt(de->pos()).row();
-			if (_dragStartRow >= 0 && toRow >= 0 && _dragStartRow != toRow)
-				emit rowMoveRequested(_dragStartRow, toRow);
-			_dragStartRow = -1;
-			return true; // block Qt's default item-level move (data is rebuilt by displayMBsSWs)
+			const QPoint viewportPos = selectedMBsSWs_tableWidget->viewport()->mapFrom(selectedMBsSWs_tableWidget, de->pos());
+			return handleDropEvent(de, viewportPos);
 		}
 	}
 	// Pass the event on to the parent class

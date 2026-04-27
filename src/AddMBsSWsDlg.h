@@ -25,6 +25,7 @@
 #include <vector>
 #include <algorithm>
 #include <QtGui>
+#include <QLineEdit>
 #include "ui_AddMBsSWsDlg.h"
 #include "SSMprotocol2.h"
 
@@ -45,11 +46,16 @@ private:
 
 	std::vector<MBSWmetadata_dt> *_MBSWmetaList;
 	std::vector<MBSWmetadata_dt> _unselectedMBsSWs_metaList;
+	std::vector<Item> _allItems;
+	std::vector<int> _visibleToAllIndex;
+	QLineEdit *_searchEdit;
+	int _selectionAnchorRow;
 	QIcon iconMB;
 	QIcon iconSW;
 
 	static bool rowIndexLessThan(const QModelIndex mi_A, const QModelIndex mi_B);
 	void setContent(const std::vector<Item>& items);
+	bool eventFilter(QObject *obj, QEvent *event);
 
 public:
 	AddMBsSWsDlg(QWidget *parent, std::vector<mb_dt> supportedMBs, std::vector<sw_dt> supportedSWs,
@@ -60,6 +66,7 @@ private slots:
 	void add();
 	void cancel();
 	void setAddButtonEnableStatus();
+	void applyFilter(const QString& text);
 
 };
 
