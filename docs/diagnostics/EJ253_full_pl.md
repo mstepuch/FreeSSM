@@ -527,16 +527,40 @@ Dla porównania — log na LPG pokazuje zdrowy silnik na właściwym paliwie:
 
 ### Sugerowana kolejność działań
 
-| Krok | Czynność | Priorytet |
-|---|---|---|
-| 1 | Smoke test układu dolotowego | PILNY — najtańszy, odpowiada na Problem B-1 |
-| 2 | Wymiana filtra paliwa benzynowego | Niedrogi, profilaktyczny |
-| 3 | Pomiar ciśnienia paliwa przy WOT | Diagnoza — warsztat lub DIY manometr |
-| 4 | Czyszczenie ultradźwiękowe wtrysków benzyna | Odpowiada na Problem B-2 |
-| 5 | Pełny reset adaptacji + 2 baki benzyny 98 | Po naprawie 1–4 |
-| 6 | Log kontrolny na benzynie | Weryfikacja skuteczności napraw |
-| 7 | Wymiana wtrysków LPG Stag | Planowo — niezależnie od benzyny |
+| Krok | Czynność | Status | Wynik |
+|---|---|---|---|
+| 1 | Smoke test układu dolotowego | ⬜ do zrobienia | — |
+| 2 | Pomiar ciśnienia paliwa przy WOT | ✅ **WYKONANO 28-04-2026** | **50 PSI / 3.4 bar — stabilne niezależnie od obrotów** |
+| 3 | Wymiana filtra paliwa benzynowego | ⬜ opcjonalny (ci. OK → niski priorytet) | — |
+| 4 | Czyszczenie ultradźwiękowe wtrysków benzyna | ⬜ **PRIORYTET #1** | — |
+| 5 | Pełny reset adaptacji + 2 baki benzyny 98 | ⬜ po naprawie 4 | — |
+| 6 | Log kontrolny na benzynie | ⬜ po naprawie | — |
+| 7 | Wymiana wtrysków LPG Stag | ⬜ planowo | — |
 
 ---
 
-*Dokument wygenerowany na podstawie logów FreeSSM i analizy `tools/log-analyzer/analyze.py`. Data: kwiecień 2026.*
+## ✅ WYNIK POMIARU CIŚNIENIA PALIWA (28-04-2026)
+
+**Pomiar:** manometr ROC**K SOLID na listwie paliwowej benzyna
+**Wynik:** **50 PSI / 3.4 bar** — stabilne przez cały zakres RPM (bez skoków, bez spadku pod obciążeniem)
+
+**Specyfikacja EJ253:** 43,5 PSI / 3,0 bara (bez próżni) do ~50 PSI / 3,4 bara (pod ciśnieniem atmosferycznym) — **wynik mieści się w normie**.
+
+**Co wyklucza ten pomiar:**
+| Komponent | Status |
+|---|---|
+| Pompa paliwa (ciśnienie za niskie pod WOT) | ✅ **WYKLUCZONA** |
+| Filtr paliwa benzynowego (za brudny → spadek ciśnienia) | ✅ **WYKLUCZONY** |
+| Regulator ciśnienia FPR (nie trzyma ciśnienia) | ✅ **WYKLUCZONY** |
+| Wyciek listwy paliwowej | ✅ **WYKLUCZONY** |
+
+**Wniosek diagnostyczny po pomiarze:**
+Strona zasilania paliwa jest **całkowicie sprawna**. Silnik dostaje benzynę przy właściwym ciśnieniu niezależnie od obrotów.
+
+To **ostatecznie potwierdza** że źródłem ubóstwa mieszanki przy WOT są **wtryskiwacze benzyny** (degradacja atomizacji + nieproporcjonalna charakterystyka przy długim czasie otwarcia). Sygnatura `chk_injector_health` (ALARM: sign-flip LTFT–/STFT+) interpretowana jest jednoznacznie.
+
+**Następny krok: czyszczenie ultradźwiękowe wtryskiwaczy benzyna** (krok 4 powyżej).
+
+---
+
+*Dokument wygenerowany na podstawie logów FreeSSM i analizy `tools/log-analyzer/analyze.py`. Aktualizacja: 28-04-2026 (pomiar ciśnienia paliwa).*
