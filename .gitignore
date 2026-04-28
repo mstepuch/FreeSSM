@@ -1,4 +1,6 @@
 FreeSSM*
+!docs/freessm-logger/
+!docs/freessm-logger/**
 Makefile*
 object_script.FreeSSM*
 ui_*.h

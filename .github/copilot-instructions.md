@@ -1,5 +1,17 @@
 # FreeSSM — Copilot Instructions
 
+## Startup — przeczytaj na początku każdej sesji
+
+Przed jakąkolwiek pracą przeczytaj master index projektu:
+- **[docs/INDEX.md](../docs/INDEX.md)** — kontekst całego projektu, aktualny stan diagnozy, wersja, następne kroki
+
+W zależności od obszaru pracy:
+- FreeSSM C++ logger: [docs/freessm-logger/index.md](../docs/freessm-logger/index.md)
+- Analyzer Python: [docs/analyzer/index.md](../docs/analyzer/index.md)
+- Diagnostyka EJ253: [docs/diagnostics/index.md](../docs/diagnostics/index.md)
+
+---
+
 ## Build & Deploy
 
 ### Po każdej kompilacji OBOWIĄZKOWE kroki:
